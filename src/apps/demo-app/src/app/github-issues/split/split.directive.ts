@@ -8,8 +8,8 @@ import {
   OnDestroy,
   QueryList,
 } from '@angular/core';
-import {FlexDirective} from '@angular/flex-layout';
 import {Subscription} from 'rxjs';
+import {MediaMarshaller} from '@angular/flex-layout';
 
 import {SplitHandleDirective} from './split-handle.directive';
 import {SplitAreaDirective} from './split-area.directive';
@@ -30,7 +30,7 @@ export class SplitDirective implements AfterContentInit, OnDestroy {
   @ContentChild(SplitHandleDirective) handle: SplitHandleDirective;
   @ContentChildren(SplitAreaDirective) areas: QueryList<SplitAreaDirective>;
 
-  constructor(private elementRef: ElementRef) {}
+  constructor(private elementRef: ElementRef, private marshal: MediaMarshaller) {}
 
   ngAfterContentInit(): void {
     this.watcher = this.handle.drag.subscribe(pos => this.onDrag(pos));
@@ -49,12 +49,16 @@ export class SplitDirective implements AfterContentInit, OnDestroy {
 
     this.areas.forEach((area, i) => {
       // get the cur flex and the % in px
-      const flex = (area.flex as FlexDirective);
+      const elRef = area.elementRef;
       const delta = (i === 0) ? dragAmount : -dragAmount;
-      const currentValue = flex.activatedValue;
+      const currentValue = this.marshal.getValue(elRef.nativeElement, 'flex');
+
+      const changeValues = currentValue.split(' ');
+      changeValues[2] = this.calculateSize(changeValues[2], delta) + '';
 
       // Update Flex-Layout value to build/inject new flexbox CSS
-      flex.activatedValue = this.calculateSize(currentValue, delta);
+      this.marshal.setValue(elRef.nativeElement, 'flex', changeValues.join(' '),
+        this.marshal.activatedBreakpoint);
     });
   }
 

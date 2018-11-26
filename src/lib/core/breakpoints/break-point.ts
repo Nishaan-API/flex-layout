@@ -10,4 +10,6 @@ export interface BreakPoint {
   alias: string;
   suffix?: string;
   overlapping?: boolean;
+  priority?: number;
+  includes?: string[];
 }

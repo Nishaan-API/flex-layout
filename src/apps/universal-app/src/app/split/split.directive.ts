@@ -11,7 +11,7 @@ import {
   QueryList
 } from '@angular/core';
 import {isPlatformBrowser} from '@angular/common';
-import {FlexDirective} from '@angular/flex-layout';
+import {MediaMarshaller} from '@angular/flex-layout';
 
 import {SplitHandleDirective} from './split-handle.directive';
 import {SplitAreaDirective} from './split-area.directive';
@@ -32,7 +32,8 @@ export class SplitDirective implements AfterContentInit, OnDestroy {
   @ContentChildren(SplitAreaDirective) areas: QueryList<SplitAreaDirective>;
 
   constructor(private elementRef: ElementRef,
-              @Inject(PLATFORM_ID) private _platformId: Object) {}
+              @Inject(PLATFORM_ID) private _platformId: Object,
+              private marshal: MediaMarshaller) {}
 
   ngAfterContentInit(): void {
     if (isPlatformBrowser(this._platformId)) {
@@ -50,17 +51,21 @@ export class SplitDirective implements AfterContentInit, OnDestroy {
    * While dragging, continually update the `flex.activatedValue` for each area
    * managed by the splitter.
    */
-  onDrag({x, y}): void {
+  onDrag({x, y}: {x: number, y: number}): void {
     const dragAmount = (this.direction === 'row') ? x : y;
 
     this.areas.forEach((area, i) => {
       // get the cur flex and the % in px
-      const flex = (area.flex as FlexDirective);
+      const elRef = area.elementRef;
       const delta = (i === 0) ? dragAmount : -dragAmount;
-      const currentValue = flex.activatedValue;
+      const currentValue = this.marshal.getValue(elRef.nativeElement, 'flex');
+
+      const changeValues = currentValue.split(' ');
+      changeValues[2] = this.calculateSize(changeValues[2], delta) + '';
 
       // Update Flex-Layout value to build/inject new flexbox CSS
-      flex.activatedValue = this.calculateSize(currentValue, delta);
+      this.marshal.setValue(elRef.nativeElement, 'flex', changeValues.join(' '),
+        this.marshal.activatedBreakpoint);
     });
   }
 

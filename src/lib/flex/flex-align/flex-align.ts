@@ -8,17 +8,13 @@
 import {
   Directive,
   ElementRef,
-  Input,
-  OnInit,
   OnChanges,
-  OnDestroy,
   SimpleChanges,
   Injectable,
 } from '@angular/core';
 import {
-  BaseDirective,
-  MediaChange,
-  MediaMonitor,
+  MediaMarshaller,
+  NewBaseDirective,
   StyleBuilder,
   StyleDefinition,
   StyleUtils,
@@ -46,45 +42,36 @@ export class FlexAlignStyleBuilder extends StyleBuilder {
   }
 }
 
+const inputs = [
+  'fxFlexAlign', 'fxFlexAlign.xs', 'fxFlexAlign.sm', 'fxFlexAlign.md',
+  'fxFlexAlign.lg', 'fxFlexAlign.xl', 'fxFlexAlign.lt-sm', 'fxFlexAlign.lt-md',
+  'fxFlexAlign.lt-lg', 'fxFlexAlign.lt-xl', 'fxFlexAlign.gt-xs', 'fxFlexAlign.gt-sm',
+  'fxFlexAlign.gt-md', 'fxFlexAlign.gt-lg'
+];
+const selector = `
+  [fxFlexAlign], [fxFlexAlign.xs], [fxFlexAlign.sm], [fxFlexAlign.md],
+  [fxFlexAlign.lg], [fxFlexAlign.xl], [fxFlexAlign.lt-sm], [fxFlexAlign.lt-md],
+  [fxFlexAlign.lt-lg], [fxFlexAlign.lt-xl], [fxFlexAlign.gt-xs], [fxFlexAlign.gt-sm],
+  [fxFlexAlign.gt-md], [fxFlexAlign.gt-lg]
+`;
+
 /**
  * 'flex-align' flexbox styling directive
  * Allows element-specific overrides for cross-axis alignments in a layout container
  * @see https://css-tricks.com/almanac/properties/a/align-self/
  */
-@Directive({
-  selector: `
-  [fxFlexAlign],
-  [fxFlexAlign.xs], [fxFlexAlign.sm], [fxFlexAlign.md], [fxFlexAlign.lg], [fxFlexAlign.xl],
-  [fxFlexAlign.lt-sm], [fxFlexAlign.lt-md], [fxFlexAlign.lt-lg], [fxFlexAlign.lt-xl],
-  [fxFlexAlign.gt-xs], [fxFlexAlign.gt-sm], [fxFlexAlign.gt-md], [fxFlexAlign.gt-lg]
-`
-})
-export class FlexAlignDirective extends BaseDirective implements OnInit, OnChanges, OnDestroy {
+@Directive({selector, inputs})
+export class FlexAlignDirective extends NewBaseDirective implements OnChanges {
 
-  /* tslint:disable */
-  @Input('fxFlexAlign')       set align(val: string)  { this._cacheInput('align', val);  };
-  @Input('fxFlexAlign.xs')    set alignXs(val: string)  { this._cacheInput('alignXs', val);  };
-  @Input('fxFlexAlign.sm')    set alignSm(val: string)  { this._cacheInput('alignSm', val); };
-  @Input('fxFlexAlign.md')    set alignMd(val: string)  { this._cacheInput('alignMd', val); };
-  @Input('fxFlexAlign.lg')    set alignLg(val: string)  { this._cacheInput('alignLg', val); };
-  @Input('fxFlexAlign.xl')    set alignXl(val: string)  { this._cacheInput('alignXl', val); };
+  protected DIRECTIVE_KEY = 'flex-align';
 
-  @Input('fxFlexAlign.lt-sm') set alignLtSm(val: string) { this._cacheInput('alignLtSm', val); };
-  @Input('fxFlexAlign.lt-md') set alignLtMd(val: string) { this._cacheInput('alignLtMd', val); };
-  @Input('fxFlexAlign.lt-lg') set alignLtLg(val: string) { this._cacheInput('alignLtLg', val); };
-  @Input('fxFlexAlign.lt-xl') set alignLtXl(val: string) { this._cacheInput('alignLtXl', val); };
-
-  @Input('fxFlexAlign.gt-xs') set alignGtXs(val: string)  { this._cacheInput('alignGtXs', val); };
-  @Input('fxFlexAlign.gt-sm') set alignGtSm(val: string)  { this._cacheInput('alignGtSm', val); };
-  @Input('fxFlexAlign.gt-md') set alignGtMd(val: string)  { this._cacheInput('alignGtMd', val); };
-  @Input('fxFlexAlign.gt-lg') set alignGtLg(val: string)  { this._cacheInput('alignGtLg', val); };
-
-  /* tslint:enable */
-  constructor(monitor: MediaMonitor,
-              elRef: ElementRef,
-              styleUtils: StyleUtils,
-              styleBuilder: FlexAlignStyleBuilder) {
-    super(monitor, elRef, styleUtils, styleBuilder);
+  constructor(protected elRef: ElementRef,
+              protected styleUtils: StyleUtils,
+              protected styleBuilder: FlexAlignStyleBuilder,
+              protected marshal: MediaMarshaller) {
+    super(elRef, styleBuilder, styleUtils, marshal);
+    this.marshal.init(this.elRef.nativeElement, this.DIRECTIVE_KEY,
+      this.updateWithValue.bind(this));
   }
 
 
@@ -96,20 +83,14 @@ export class FlexAlignDirective extends BaseDirective implements OnInit, OnChang
    * For @Input changes on the current mq activation property, see onMediaQueryChanges()
    */
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['align'] != null || this._mqActivation) {
-      this._updateWithValue();
-    }
-  }
-
-  /**
-   * After the initial onChanges, build an mqActivation object that bridges
-   * mql change events to onMediaQueryChange handlers
-   */
-  ngOnInit() {
-    super.ngOnInit();
-
-    this._listenForMediaQueryChanges('align', 'stretch', (changes: MediaChange) => {
-      this._updateWithValue(changes.value);
+    // TODO: figure out how custom breakpoints interact with this method
+    // maybe just have it as @Inputs for them?
+    Object.keys(changes).forEach(key => {
+      if (inputs.indexOf(key) !== -1) {
+        const bp = key.split('.')[1] || '';
+        const val = changes[key].currentValue;
+        this.setValue(val, bp);
+      }
     });
   }
 
@@ -117,12 +98,8 @@ export class FlexAlignDirective extends BaseDirective implements OnInit, OnChang
   // Protected methods
   // *********************************************
 
-  protected _updateWithValue(value?: string|number) {
-    value = value || this._queryInput('align') || 'stretch';
-    if (this._mqActivation) {
-      value = this._mqActivation.activatedInput;
-    }
-
+  protected updateWithValue(value?: string|number) {
+    value = value || 'stretch';
     this.addStyles(value && (value + '') || '');
   }
 

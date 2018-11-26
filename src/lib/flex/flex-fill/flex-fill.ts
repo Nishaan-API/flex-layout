@@ -7,11 +7,11 @@
  */
 import {Directive, ElementRef, Injectable} from '@angular/core';
 import {
-  BaseDirective,
-  MediaMonitor,
+  NewBaseDirective,
   StyleBuilder,
   StyleDefinition,
   StyleUtils,
+  MediaMarshaller,
 } from '@angular/flex-layout/core';
 
 const FLEX_FILL_CSS = {
@@ -35,16 +35,13 @@ export class FlexFillStyleBuilder extends StyleBuilder {
  *
  *  NOTE: fxFill is NOT responsive API!!
  */
-@Directive({selector: `
-  [fxFill],
-  [fxFlexFill]
-`})
-export class FlexFillDirective extends BaseDirective {
-  constructor(monitor: MediaMonitor,
-              public elRef: ElementRef,
-              styleUtils: StyleUtils,
-              styleBuilder: FlexFillStyleBuilder) {
-    super(monitor, elRef, styleUtils, styleBuilder);
+@Directive({selector: `[fxFill], [fxFlexFill]`})
+export class FlexFillDirective extends NewBaseDirective {
+  constructor(protected elRef: ElementRef,
+              protected styleUtils: StyleUtils,
+              protected styleBuilder: FlexFillStyleBuilder,
+              protected marshal: MediaMarshaller) {
+    super(elRef, styleBuilder, styleUtils, marshal);
     this.addStyles('');
   }
 

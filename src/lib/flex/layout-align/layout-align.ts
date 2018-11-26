@@ -8,24 +8,21 @@
 import {
   Directive,
   ElementRef,
-  Input,
   OnChanges,
-  OnDestroy,
-  OnInit,
   Optional,
   SimpleChanges,
   Self,
   Injectable,
+  OnDestroy,
 } from '@angular/core';
 import {
-  BaseDirective,
-  MediaChange,
-  MediaMonitor,
+  NewBaseDirective,
   StyleBuilder,
   StyleDefinition,
   StyleUtils,
+  MediaMarshaller,
 } from '@angular/flex-layout/core';
-import {Subscription} from 'rxjs';
+import {EMPTY, Subscription} from 'rxjs';
 
 import {extendObject} from '../../utils/object-extend';
 import {Layout, LayoutDirective} from '../layout/layout';
@@ -108,6 +105,19 @@ export class LayoutAlignStyleBuilder extends StyleBuilder {
   }
 }
 
+const inputs = [
+  'fxLayoutAlign', 'fxLayoutAlign.xs', 'fxLayoutAlign.sm', 'fxLayoutAlign.md',
+  'fxLayoutAlign.lg', 'fxLayoutAlign.xl', 'fxLayoutAlign.lt-sm', 'fxLayoutAlign.lt-md',
+  'fxLayoutAlign.lt-lg', 'fxLayoutAlign.lt-xl', 'fxLayoutAlign.gt-xs', 'fxLayoutAlign.gt-sm',
+  'fxLayoutAlign.gt-md', 'fxLayoutAlign.gt-lg'
+];
+const selector = `
+  [fxLayoutAlign], [fxLayoutAlign.xs], [fxLayoutAlign.sm], [fxLayoutAlign.md],
+  [fxLayoutAlign.lg], [fxLayoutAlign.xl], [fxLayoutAlign.lt-sm], [fxLayoutAlign.lt-md],
+  [fxLayoutAlign.lt-lg], [fxLayoutAlign.lt-xl], [fxLayoutAlign.gt-xs], [fxLayoutAlign.gt-sm],
+  [fxLayoutAlign.gt-md], [fxLayoutAlign.gt-lg]
+`;
+
 /**
  * 'layout-align' flexbox styling directive
  *  Defines positioning of child elements along main and cross axis in a layout container
@@ -117,46 +127,24 @@ export class LayoutAlignStyleBuilder extends StyleBuilder {
  *  @see https://css-tricks.com/almanac/properties/a/align-items/
  *  @see https://css-tricks.com/almanac/properties/a/align-content/
  */
-@Directive({selector: `
-  [fxLayoutAlign],
-  [fxLayoutAlign.xs], [fxLayoutAlign.sm], [fxLayoutAlign.md], [fxLayoutAlign.lg],[fxLayoutAlign.xl],
-  [fxLayoutAlign.lt-sm], [fxLayoutAlign.lt-md], [fxLayoutAlign.lt-lg], [fxLayoutAlign.lt-xl],
-  [fxLayoutAlign.gt-xs], [fxLayoutAlign.gt-sm], [fxLayoutAlign.gt-md], [fxLayoutAlign.gt-lg]
-`})
-export class LayoutAlignDirective extends BaseDirective implements OnInit, OnChanges, OnDestroy {
-
-  protected _layout = 'row';  // default flex-direction
-  protected _layoutWatcher?: Subscription;
-
-  /* tslint:disable */
-  @Input('fxLayoutAlign')       set align(val: string)     { this._cacheInput('align', val); }
-  @Input('fxLayoutAlign.xs')    set alignXs(val: string)   { this._cacheInput('alignXs', val); }
-  @Input('fxLayoutAlign.sm')    set alignSm(val: string)   { this._cacheInput('alignSm', val); };
-  @Input('fxLayoutAlign.md')    set alignMd(val: string)   { this._cacheInput('alignMd', val); };
-  @Input('fxLayoutAlign.lg')    set alignLg(val: string)   { this._cacheInput('alignLg', val); };
-  @Input('fxLayoutAlign.xl')    set alignXl(val: string)   { this._cacheInput('alignXl', val); };
-
-  @Input('fxLayoutAlign.gt-xs') set alignGtXs(val: string) { this._cacheInput('alignGtXs', val); };
-  @Input('fxLayoutAlign.gt-sm') set alignGtSm(val: string) { this._cacheInput('alignGtSm', val); };
-  @Input('fxLayoutAlign.gt-md') set alignGtMd(val: string) { this._cacheInput('alignGtMd', val); };
-  @Input('fxLayoutAlign.gt-lg') set alignGtLg(val: string) { this._cacheInput('alignGtLg', val); };
-
-  @Input('fxLayoutAlign.lt-sm') set alignLtSm(val: string) { this._cacheInput('alignLtSm', val); };
-  @Input('fxLayoutAlign.lt-md') set alignLtMd(val: string) { this._cacheInput('alignLtMd', val); };
-  @Input('fxLayoutAlign.lt-lg') set alignLtLg(val: string) { this._cacheInput('alignLtLg', val); };
-  @Input('fxLayoutAlign.lt-xl') set alignLtXl(val: string) { this._cacheInput('alignLtXl', val); };
+@Directive({selector, inputs})
+export class LayoutAlignDirective extends NewBaseDirective implements OnChanges, OnDestroy {
+  protected DIRECTIVE_KEY = 'layout-align';
+  protected layout = 'row';  // default flex-direction
+  protected layoutWatcher?: Subscription;
 
   /* tslint:enable */
-  constructor(
-      monitor: MediaMonitor,
-      elRef: ElementRef,
-      @Optional() @Self() container: LayoutDirective,
-      styleUtils: StyleUtils,
-      styleBuilder: LayoutAlignStyleBuilder) {
-    super(monitor, elRef, styleUtils, styleBuilder);
+  constructor(protected elRef: ElementRef,
+              @Optional() @Self() protected container: LayoutDirective,
+              protected styleUtils: StyleUtils,
+              protected styleBuilder: LayoutAlignStyleBuilder,
+              protected marshal: MediaMarshaller) {
+    super(elRef, styleBuilder, styleUtils, marshal);
+    this.marshal.init(this.elRef.nativeElement, this.DIRECTIVE_KEY,
+      this.updateWithValue.bind(this), [this.container ? this.container.layout$ : EMPTY]);
 
     if (container) {  // Subscribe to layout direction changes
-      this._layoutWatcher = container.layout$.subscribe(this._onLayoutChange.bind(this));
+      this.layoutWatcher = container.layout$.subscribe(this.onLayoutChange.bind(this));
     }
   }
 
@@ -165,27 +153,20 @@ export class LayoutAlignDirective extends BaseDirective implements OnInit, OnCha
   // *********************************************
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['align'] != null || this._mqActivation) {
-      this._updateWithValue();
-    }
-  }
-
-  /**
-   * After the initial onChanges, build an mqActivation object that bridges
-   * mql change events to onMediaQueryChange handlers
-   */
-  ngOnInit() {
-    super.ngOnInit();
-
-    this._listenForMediaQueryChanges('align', 'start stretch', (changes: MediaChange) => {
-      this._updateWithValue(changes.value);
+    // TODO: figure out how custom breakpoints interact with this method
+    // maybe just have it as @Inputs for them?
+    Object.keys(changes).forEach(key => {
+      if (inputs.indexOf(key) !== -1) {
+        const bp = key.split('.')[1] || '';
+        const val = changes[key].currentValue;
+        this.setValue(val, bp);
+      }
     });
   }
 
   ngOnDestroy() {
-    super.ngOnDestroy();
-    if ( this._layoutWatcher ) {
-      this._layoutWatcher.unsubscribe();
+    if (this.layoutWatcher) {
+      this.layoutWatcher.unsubscribe();
     }
   }
 
@@ -196,34 +177,33 @@ export class LayoutAlignDirective extends BaseDirective implements OnInit, OnCha
   /**
    *
    */
-  protected _updateWithValue(value?: string) {
-    value = value || this._queryInput('align') || 'start stretch';
-    if (this._mqActivation) {
-      value = this._mqActivation.activatedInput;
+  protected updateWithValue(value: string) {
+    const layout = this.layout || 'row';
+    if (layout === 'row') {
+      this.styleCache = layoutAlignHorizontalCache;
+    } else if (layout === 'row-reverse') {
+      this.styleCache = layoutAlignHorizontalRevCache;
+    } else if (layout === 'column') {
+      this.styleCache = layoutAlignVerticalCache;
+    } else if (layout === 'column-reverse') {
+      this.styleCache = layoutAlignVerticalRevCache;
     }
-
-    const layout = this._layout || 'row';
-    this._styleCache = layout === 'row' ?
-      layoutAlignHorizontalCache : layoutAlignVerticalCache;
-    this.addStyles(value || '', {layout});
+    this.addStyles(value, {layout});
   }
 
   /**
    * Cache the parent container 'flex-direction' and update the 'flex' styles
    */
-  protected _onLayoutChange(layout: Layout) {
-    this._layout = (layout.direction || '').toLowerCase();
-    if (!LAYOUT_VALUES.find(x => x === this._layout)) {
-      this._layout = 'row';
+  protected onLayoutChange(layout: Layout) {
+    this.layout = (layout.direction || '').toLowerCase();
+    if (!LAYOUT_VALUES.find(x => x === this.layout)) {
+      this.layout = 'row';
     }
-
-    let value = this._queryInput('align') || 'start stretch';
-    if (this._mqActivation) {
-      value = this._mqActivation.activatedInput;
-    }
-    this.addStyles(value, {layout: this._layout || 'row'});
+    this.updateWithValue(this.marshal.getValue(this.nativeElement, this.DIRECTIVE_KEY));
   }
 }
 
 const layoutAlignHorizontalCache: Map<string, StyleDefinition> = new Map();
 const layoutAlignVerticalCache: Map<string, StyleDefinition> = new Map();
+const layoutAlignHorizontalRevCache: Map<string, StyleDefinition> = new Map();
+const layoutAlignVerticalRevCache: Map<string, StyleDefinition> = new Map();
