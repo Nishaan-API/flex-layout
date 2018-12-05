@@ -10,9 +10,9 @@ import {
   ElementRef,
   Inject,
   Injectable,
+  Input,
   OnChanges,
   OnDestroy,
-  SimpleChanges,
 } from '@angular/core';
 import {
   NewBaseDirective,
@@ -191,7 +191,7 @@ const inputs = [
   'fxFlex', 'fxFlex.xs', 'fxFlex.sm', 'fxFlex.md',
   'fxFlex.lg', 'fxFlex.xl', 'fxFlex.lt-sm', 'fxFlex.lt-md',
   'fxFlex.lt-lg', 'fxFlex.lt-xl', 'fxFlex.gt-xs', 'fxFlex.gt-sm',
-  'fxFlex.gt-md', 'fxFlex.gt-lg', 'fxShrink', 'fxGrow'
+  'fxFlex.gt-md', 'fxFlex.gt-lg'
 ];
 const selector = `
   [fxFlex], [fxFlex.xs], [fxFlex.sm], [fxFlex.md],
@@ -217,11 +217,25 @@ export class FlexDirective extends NewBaseDirective implements OnDestroy {
   protected DIRECTIVE_KEY = 'flex';
   protected direction = '';
   protected wrap = false;
+
+
+  @Input('fxShrink')
+  get shrink(): string { return this.flexShrink; }
+  set shrink(value: string) {
+    this.flexShrink = value || '1';
+    this.triggerReflow();
+  }
+
+  @Input('fxGrow')
+  get grow(): string { return this.flexGrow; }
+  set grow(value: string) {
+    this.flexGrow = value || '1';
+    this.triggerReflow();
+  }
+
   protected flexGrow = '1';
   protected flexShrink = '1';
 
-  // Note: Explicitly @SkipSelf on LayoutDirective because we are looking
-  //       for the parent flex container for this flex item.
   constructor(protected elRef: ElementRef,
               protected styleUtils: StyleUtils,
               @Inject(LAYOUT_CONFIG) protected layoutConfig: LayoutConfigOptions,
@@ -271,30 +285,17 @@ export class FlexDirective extends NewBaseDirective implements OnDestroy {
     const parts = validateBasis(basis, this.flexGrow, this.flexShrink);
     this.addStyles(parts.join(' '), {direction, hasWrap});
   }
+
+  /** Trigger a style reflow, usually based on a shrink/grow input event */
+  protected triggerReflow() {
+    const parts = validateBasis(this.activatedValue, this.flexGrow, this.flexShrink);
+    this.marshal.updateElement(this.nativeElement, this.DIRECTIVE_KEY, parts.join(' '));
+  }
 }
 
 @Directive({inputs, selector})
 export class DefaultFlexDirective extends FlexDirective implements OnChanges {
-  protected inputs = inputs
-    .filter(s => s !== 'fxShrink')
-    .filter(s => s !== 'fxGrow');
-
-  /**
-   * For @Input changes on the current mq activation property, see onMediaQueryChanges()
-   */
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['fxGrow'] !== undefined) {
-      this.flexGrow = changes['fxGrow'].currentValue || '1';
-      const parts = validateBasis(this.activatedValue, this.flexGrow, this.flexShrink);
-      this.marshal.updateElement(this.nativeElement, this.DIRECTIVE_KEY, parts.join(' '));
-    }
-    if (changes['fxShrink'] !== undefined) {
-      this.flexShrink = changes['fxShrink'].currentValue || '1';
-      const parts = validateBasis(this.activatedValue, this.flexGrow, this.flexShrink);
-      this.marshal.updateElement(this.nativeElement, this.DIRECTIVE_KEY, parts.join(' '));
-    }
-    super.ngOnChanges(changes);
-  }
+  protected inputs = inputs;
 }
 
 const flexRowCache: Map<string, StyleDefinition> = new Map();
