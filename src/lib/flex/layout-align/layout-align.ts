@@ -10,8 +10,6 @@ import {
   ElementRef,
   OnChanges,
   Optional,
-  SimpleChanges,
-  Self,
   Injectable,
   OnDestroy,
 } from '@angular/core';
@@ -22,10 +20,9 @@ import {
   StyleUtils,
   MediaMarshaller,
 } from '@angular/flex-layout/core';
-import {EMPTY, Subscription} from 'rxjs';
+import {Subscription} from 'rxjs';
 
 import {extendObject} from '../../utils/object-extend';
-import {Layout, LayoutDirective} from '../layout/layout';
 import {LAYOUT_VALUES, isFlowHorizontal} from '../../utils/layout-validator';
 
 export interface LayoutAlignParent {
@@ -127,42 +124,27 @@ const selector = `
  *  @see https://css-tricks.com/almanac/properties/a/align-items/
  *  @see https://css-tricks.com/almanac/properties/a/align-content/
  */
-@Directive({selector, inputs})
 export class LayoutAlignDirective extends NewBaseDirective implements OnChanges, OnDestroy {
   protected DIRECTIVE_KEY = 'layout-align';
   protected layout = 'row';  // default flex-direction
   protected layoutWatcher?: Subscription;
 
-  /* tslint:enable */
   constructor(protected elRef: ElementRef,
-              @Optional() @Self() protected container: LayoutDirective,
               protected styleUtils: StyleUtils,
-              protected styleBuilder: LayoutAlignStyleBuilder,
+              // NOTE: not actually optional, but we need to force DI without a
+              // constructor call
+              @Optional() protected styleBuilder: LayoutAlignStyleBuilder,
               protected marshal: MediaMarshaller) {
     super(elRef, styleBuilder, styleUtils, marshal);
     this.marshal.init(this.elRef.nativeElement, this.DIRECTIVE_KEY,
-      this.updateWithValue.bind(this), [this.container ? this.container.layout$ : EMPTY]);
-
-    if (container) {  // Subscribe to layout direction changes
-      this.layoutWatcher = container.layout$.subscribe(this.onLayoutChange.bind(this));
-    }
+      this.updateWithValue.bind(this));
+    this.layoutWatcher = this.marshal.trackValue(this.nativeElement, 'layout')
+      .subscribe(this.onLayoutChange.bind(this));
   }
 
   // *********************************************
   // Lifecycle Methods
   // *********************************************
-
-  ngOnChanges(changes: SimpleChanges) {
-    // TODO: figure out how custom breakpoints interact with this method
-    // maybe just have it as @Inputs for them?
-    Object.keys(changes).forEach(key => {
-      if (inputs.indexOf(key) !== -1) {
-        const bp = key.split('.')[1] || '';
-        const val = changes[key].currentValue;
-        this.setValue(val, bp);
-      }
-    });
-  }
 
   ngOnDestroy() {
     if (this.layoutWatcher) {
@@ -194,13 +176,18 @@ export class LayoutAlignDirective extends NewBaseDirective implements OnChanges,
   /**
    * Cache the parent container 'flex-direction' and update the 'flex' styles
    */
-  protected onLayoutChange(layout: Layout) {
-    this.layout = (layout.direction || '').toLowerCase();
+  protected onLayoutChange(layout: string) {
+    this.layout = layout;
     if (!LAYOUT_VALUES.find(x => x === this.layout)) {
       this.layout = 'row';
     }
     this.updateWithValue(this.marshal.getValue(this.nativeElement, this.DIRECTIVE_KEY));
   }
+}
+
+@Directive({selector, inputs})
+export class DefaultLayoutAlignDirective extends LayoutAlignDirective {
+  protected inputs = inputs;
 }
 
 const layoutAlignHorizontalCache: Map<string, StyleDefinition> = new Map();

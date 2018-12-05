@@ -12,9 +12,7 @@ import {
   Injectable,
   OnChanges,
   OnDestroy,
-  Optional,
   SimpleChanges,
-  SkipSelf,
 } from '@angular/core';
 import {
   NewBaseDirective,
@@ -26,10 +24,9 @@ import {
   StyleDefinition,
   MediaMarshaller,
 } from '@angular/flex-layout/core';
-import {EMPTY, Subscription} from 'rxjs';
+import {Subscription} from 'rxjs';
 
 import {extendObject} from '../../utils/object-extend';
-import {Layout, LayoutDirective} from '../layout/layout';
 import {isFlowHorizontal} from '../../utils/layout-validator';
 
 interface FlexBuilderParent {
@@ -209,11 +206,7 @@ const selector = `
  *
  * @see https://css-tricks.com/snippets/css/a-guide-to-flexbox/
  */
-@Directive({selector, inputs})
-export class FlexDirective extends NewBaseDirective implements OnChanges, OnDestroy {
-
-  /** The flex-direction of this element's flex container. Defaults to 'row'. */
-  protected layout?: Layout;
+export class FlexDirective extends NewBaseDirective implements OnDestroy {
 
   /**
    * Subscription to the parent flex container's layout changes.
@@ -222,53 +215,25 @@ export class FlexDirective extends NewBaseDirective implements OnChanges, OnDest
   protected layoutWatcher?: Subscription;
 
   protected DIRECTIVE_KEY = 'flex';
-  protected flexBasis = '';
+  protected direction = '';
+  protected wrap = false;
   protected flexGrow = '1';
   protected flexShrink = '1';
 
   // Note: Explicitly @SkipSelf on LayoutDirective because we are looking
   //       for the parent flex container for this flex item.
   constructor(protected elRef: ElementRef,
-              @Optional() @SkipSelf() protected container: LayoutDirective,
               protected styleUtils: StyleUtils,
               @Inject(LAYOUT_CONFIG) protected layoutConfig: LayoutConfigOptions,
               protected styleBuilder: FlexStyleBuilder,
               protected marshal: MediaMarshaller) {
     super(elRef, styleBuilder, styleUtils, marshal);
     this.marshal.init(this.elRef.nativeElement, this.DIRECTIVE_KEY,
-      this.updateStyle.bind(this), [this.container ? this.container.layout$ : EMPTY]);
-    if (container) {
-      // If this flex item is inside of a flex container marked with
-      // Subscribe to layout immediate parent direction changes
-      this.layoutWatcher = container.layout$.subscribe(this.onLayoutChange.bind(this));
+      this.updateStyle.bind(this));
+    if (this.parentElement) {
+      this.layoutWatcher = this.marshal.trackValue(this.parentElement, 'layout')
+        .subscribe(this.onLayoutChange.bind(this));
     }
-  }
-
-  /**
-   * For @Input changes on the current mq activation property, see onMediaQueryChanges()
-   */
-  ngOnChanges(changes: SimpleChanges) {
-    // TODO: figure out how custom breakpoints interact with this method
-    // maybe just have it as @Inputs for them?
-    if (changes['fxGrow'] !== undefined) {
-      this.flexGrow = changes['fxGrow'].currentValue || '1';
-      const parts = validateBasis(this.flexBasis, this.flexGrow, this.flexShrink);
-      this.marshal.updateElement(this.nativeElement, this.DIRECTIVE_KEY, parts.join(' '));
-    }
-    if (changes['fxShrink'] !== undefined) {
-      this.flexShrink = changes['fxShrink'].currentValue || '1';
-      const parts = validateBasis(this.flexBasis, this.flexGrow, this.flexShrink);
-      this.marshal.updateElement(this.nativeElement, this.DIRECTIVE_KEY, parts.join(' '));
-    }
-    Object.keys(changes).forEach(key => {
-      if (key !== 'fxShrink' && key !== 'fxGrow' && inputs.indexOf(key) !== -1) {
-        const bp = key.split('.')[1] || '';
-        const val = changes[key].currentValue;
-        this.flexBasis = String(val).replace(';', '');
-        const parts = validateBasis(this.flexBasis, this.flexGrow, this.flexShrink);
-        this.setValue(parts.join(' '), bp);
-      }
-    });
   }
 
   ngOnDestroy() {
@@ -281,15 +246,18 @@ export class FlexDirective extends NewBaseDirective implements OnChanges, OnDest
    * Caches the parent container's 'flex-direction' and updates the element's style.
    * Used as a handler for layout change events from the parent flex container.
    */
-  protected onLayoutChange(layout?: Layout) {
-    this.layout = layout || this.layout || {direction: 'row', wrap: false};
+  protected onLayoutChange(layout: string) {
+    const layoutParts = layout.split(' ');
+    this.direction = layoutParts[0];
+    this.wrap = layoutParts[1] !== undefined && layoutParts[1] === 'wrap';
     this.updateStyle(this.marshal.getValue(this.nativeElement, this.DIRECTIVE_KEY));
   }
 
+  /** Input to this is exclusively the basis input value */
   protected updateStyle(value: string) {
     const addFlexToParent = this.layoutConfig.addFlexToParent !== false;
-    const direction = this.getFlexFlowDirection(this.parentElement, addFlexToParent);
-    const hasWrap = this.layout && this.layout.wrap;
+    const direction = this.getFlexFlowDirection(this.parentElement!, addFlexToParent);
+    const hasWrap = this.wrap;
     if (direction === 'row' && hasWrap) {
       this.styleCache = flexRowWrapCache;
     } else if (direction === 'row' && !hasWrap) {
@@ -299,7 +267,33 @@ export class FlexDirective extends NewBaseDirective implements OnChanges, OnDest
     } else if (direction === 'column' && !hasWrap) {
       this.styleCache = flexColumnCache;
     }
-    this.addStyles(value, {direction, hasWrap});
+    const basis = String(value).replace(';', '');
+    const parts = validateBasis(basis, this.flexGrow, this.flexShrink);
+    this.addStyles(parts.join(' '), {direction, hasWrap});
+  }
+}
+
+@Directive({inputs, selector})
+export class DefaultFlexDirective extends FlexDirective implements OnChanges {
+  protected inputs = inputs
+    .filter(s => s !== 'fxShrink')
+    .filter(s => s !== 'fxGrow');
+
+  /**
+   * For @Input changes on the current mq activation property, see onMediaQueryChanges()
+   */
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['fxGrow'] !== undefined) {
+      this.flexGrow = changes['fxGrow'].currentValue || '1';
+      const parts = validateBasis(this.activatedValue, this.flexGrow, this.flexShrink);
+      this.marshal.updateElement(this.nativeElement, this.DIRECTIVE_KEY, parts.join(' '));
+    }
+    if (changes['fxShrink'] !== undefined) {
+      this.flexShrink = changes['fxShrink'].currentValue || '1';
+      const parts = validateBasis(this.activatedValue, this.flexGrow, this.flexShrink);
+      this.marshal.updateElement(this.nativeElement, this.DIRECTIVE_KEY, parts.join(' '));
+    }
+    super.ngOnChanges(changes);
   }
 }
 

@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import {Injectable} from '@angular/core';
-import {merge, Observable, Subscription} from 'rxjs';
+import {merge, Observable, Subject, Subscription} from 'rxjs';
 import {BreakPoint} from '../breakpoints/break-point';
 import {BreakPointRegistry} from '../breakpoints/break-point-registry';
 import {MatchMedia} from '../match-media/match-media';
@@ -16,7 +16,8 @@ type ValueMap = Map<string, string>;
 type BreakpointMap = Map<string, ValueMap>;
 type ElementMap = Map<HTMLElement, BreakpointMap>;
 type WatcherMap = WeakMap<HTMLElement, Subscription>;
-type BuilderMap = Map<HTMLElement, Map<string, Function>>;
+type BuilderMap = WeakMap<HTMLElement, Map<string, Function>>;
+type SubjectMap = WeakMap<HTMLElement, Map<string, Subject<string>>>;
 
 /**
  * MediaMarshaller - marshal MatchMedia events to their respective directives
@@ -26,7 +27,8 @@ export class MediaMarshaller {
   private activatedBreakpoints: BreakPoint[] = [];
   private elementMap: ElementMap = new Map();
   private watcherMap: WatcherMap = new WeakMap();
-  private builderMap: BuilderMap = new Map();
+  private builderMap: BuilderMap = new WeakMap();
+  private subjectMap: SubjectMap = new WeakMap();
 
   get activatedBreakpoint(): string {
     return this.activatedBreakpoints[0] ? this.activatedBreakpoints[0].alias : '';
@@ -64,11 +66,13 @@ export class MediaMarshaller {
    * @param key
    * @param builder optional so that custom bp directives don't have to re-provide this
    * @param observables
+   * @param trackParent whether to trigger events based on parent changes
+   * @param parentKey the key to track on the parent element
    */
   init(element: HTMLElement,
        key: string,
        builder?: Function,
-       observables?: Observable<any>[]): void {
+       observables: Observable<any>[] = []): void {
     if (builder) {
       let builders = this.builderMap.get(element);
       if (!builders) {
@@ -103,6 +107,22 @@ export class MediaMarshaller {
   }
 
   /**
+   * whether the element has values for a given key
+   * @param element
+   * @param key
+   */
+  hasValue(element: HTMLElement, key: string): boolean {
+    const bpMap = this.elementMap.get(element);
+    if (bpMap) {
+      const values = this.getFallback(bpMap);
+      if (values) {
+        return values.get(key) && true || false;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Set the value for an input on a directive
    * @param element the element in question
    * @param key the type of the directive (e.g. flex, layout-gap, etc)
@@ -120,6 +140,20 @@ export class MediaMarshaller {
       this.elementMap.set(element, bpMap);
     }
     this.updateElement(element, key, this.getValue(element, key));
+  }
+
+  trackValue(element: HTMLElement, key: string): Observable<string> {
+    let elementMap = this.subjectMap.get(element);
+    if (!elementMap) {
+      elementMap = new Map();
+      this.subjectMap.set(element, elementMap);
+    }
+    let subject = elementMap.get(key);
+    if (!subject) {
+      subject = new Subject();
+      elementMap.set(key, subject);
+    }
+    return subject.asObservable();
   }
 
   /** update all styles for all elements on the current breakpoint */
@@ -140,6 +174,13 @@ export class MediaMarshaller {
    */
   updateElement(element: HTMLElement, key: string, val: any): void {
     const builders = this.builderMap.get(element);
+    const subjects = this.subjectMap.get(element);
+    if (subjects) {
+      const subject = subjects.get(key);
+      if (subject) {
+        subject.next(val);
+      }
+    }
     if (builders) {
       const builder = builders.get(key);
       if (builder) {

@@ -5,24 +5,11 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import {
-  Component,
-  Directive,
-  ElementRef,
-  Inject,
-  Input,
-  OnInit,
-  Optional,
-  PLATFORM_ID,
-  Self,
-} from '@angular/core';
+import {Component, Directive, Input, OnInit, PLATFORM_ID} from '@angular/core';
 import {CommonModule, isPlatformBrowser} from '@angular/common';
 import {ComponentFixture, TestBed, inject, async} from '@angular/core/testing';
 import {
-  LAYOUT_CONFIG,
-  LayoutConfigOptions,
   MatchMedia,
-  MediaMonitor,
   MockMatchMedia,
   MockMatchMediaProvider,
   MediaObserver,
@@ -43,7 +30,6 @@ import {FormsModule} from '@angular/forms';
 import {MatSelectModule} from '@angular/material/select';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {negativeOf, ShowHideDirective} from './show-hide';
-import {LayoutDirective} from '@angular/flex-layout/flex';
 
 describe('show directive', () => {
   let fixture: ComponentFixture<any>;
@@ -352,16 +338,6 @@ describe('show directive', () => {
   selector: `[fxShow.sm-md], [fxHide.sm-md]`
 })
 class FxShowHideDirective extends ShowHideDirective {
-  constructor(monitor: MediaMonitor,
-              @Optional() @Self() protected layout: LayoutDirective,
-              protected elRef: ElementRef,
-              protected styleUtils: StyleUtils,
-              @Inject(PLATFORM_ID) protected platformId: Object,
-              @Optional() @Inject(SERVER_TOKEN) protected serverModuleLoaded: boolean,
-              @Inject(LAYOUT_CONFIG) protected layoutConfig: LayoutConfigOptions) {
-    super(monitor, layout, elRef, styleUtils, platformId, serverModuleLoaded, layoutConfig);
-  }
-
   @Input('fxShow.sm-md') set showSmMd(val: string) {
     this._cacheInput('showSmMd', val);
   }

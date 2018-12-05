@@ -5,13 +5,7 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import {
-  Directive,
-  ElementRef,
-  OnChanges,
-  SimpleChanges,
-  Injectable,
-} from '@angular/core';
+import {Directive, ElementRef, Injectable, Optional} from '@angular/core';
 import {
   MediaMarshaller,
   NewBaseDirective,
@@ -60,38 +54,19 @@ const selector = `
  * Allows element-specific overrides for cross-axis alignments in a layout container
  * @see https://css-tricks.com/almanac/properties/a/align-self/
  */
-@Directive({selector, inputs})
-export class FlexAlignDirective extends NewBaseDirective implements OnChanges {
+export class FlexAlignDirective extends NewBaseDirective {
 
   protected DIRECTIVE_KEY = 'flex-align';
 
   constructor(protected elRef: ElementRef,
               protected styleUtils: StyleUtils,
-              protected styleBuilder: FlexAlignStyleBuilder,
+              // NOTE: not actually optional, but we need to force DI without a
+              // constructor call
+              @Optional() protected styleBuilder: FlexAlignStyleBuilder,
               protected marshal: MediaMarshaller) {
     super(elRef, styleBuilder, styleUtils, marshal);
     this.marshal.init(this.elRef.nativeElement, this.DIRECTIVE_KEY,
       this.updateWithValue.bind(this));
-  }
-
-
-  // *********************************************
-  // Lifecycle Methods
-  // *********************************************
-
-  /**
-   * For @Input changes on the current mq activation property, see onMediaQueryChanges()
-   */
-  ngOnChanges(changes: SimpleChanges) {
-    // TODO: figure out how custom breakpoints interact with this method
-    // maybe just have it as @Inputs for them?
-    Object.keys(changes).forEach(key => {
-      if (inputs.indexOf(key) !== -1) {
-        const bp = key.split('.')[1] || '';
-        const val = changes[key].currentValue;
-        this.setValue(val, bp);
-      }
-    });
   }
 
   // *********************************************
@@ -104,6 +79,11 @@ export class FlexAlignDirective extends NewBaseDirective implements OnChanges {
   }
 
   protected _styleCache = flexAlignCache;
+}
+
+@Directive({selector, inputs})
+export class DefaultFlexAlignDirective extends FlexAlignDirective {
+  protected inputs = inputs;
 }
 
 const flexAlignCache: Map<string, StyleDefinition> = new Map();

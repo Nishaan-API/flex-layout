@@ -5,13 +5,7 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import {
-  Directive,
-  ElementRef,
-  OnChanges,
-  SimpleChanges,
-  Injectable,
-} from '@angular/core';
+import {Directive, ElementRef, OnChanges, Injectable, Optional} from '@angular/core';
 import {
   NewBaseDirective,
   StyleBuilder,
@@ -47,37 +41,19 @@ const selector = `
  * Configures the positional ordering of the element in a sorted layout container
  * @see https://css-tricks.com/almanac/properties/o/order/
  */
-@Directive({selector, inputs})
 export class FlexOrderDirective extends NewBaseDirective implements OnChanges {
 
   protected DIRECTIVE_KEY = 'flex-order';
 
   constructor(protected elRef: ElementRef,
               protected styleUtils: StyleUtils,
-              protected styleBuilder: FlexOrderStyleBuilder,
+              // NOTE: not actually optional, but we need to force DI without a
+              // constructor call
+              @Optional() protected styleBuilder: FlexOrderStyleBuilder,
               protected marshal: MediaMarshaller) {
     super(elRef, styleBuilder, styleUtils, marshal);
     this.marshal.init(this.elRef.nativeElement, this.DIRECTIVE_KEY,
       this.updateWithValue.bind(this));
-  }
-
-  // *********************************************
-  // Lifecycle Methods
-  // *********************************************
-
-  /**
-   * For @Input changes on the current mq activation property, see onMediaQueryChanges()
-   */
-  ngOnChanges(changes: SimpleChanges) {
-    // TODO: figure out how custom breakpoints interact with this method
-    // maybe just have it as @Inputs for them?
-    Object.keys(changes).forEach(key => {
-      if (inputs.indexOf(key) !== -1) {
-        const bp = key.split('.')[1] || '';
-        const val = changes[key].currentValue;
-        this.setValue(val, bp);
-      }
-    });
   }
 
   // *********************************************
@@ -90,6 +66,11 @@ export class FlexOrderDirective extends NewBaseDirective implements OnChanges {
   }
 
   protected _styleCache = flexOrderCache;
+}
+
+@Directive({selector, inputs})
+export class DefaultFlexOrderDirective extends FlexOrderDirective {
+  protected inputs = inputs;
 }
 
 const flexOrderCache: Map<string, StyleDefinition> = new Map();

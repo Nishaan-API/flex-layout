@@ -18,8 +18,8 @@ import {
 } from '@angular/flex-layout/core';
 
 import {FlexLayoutModule} from '../../module';
-import {FlexDirective, FlexStyleBuilder} from './flex';
-import {LayoutDirective} from '../layout/layout';
+import {DefaultFlexDirective, FlexStyleBuilder} from './flex';
+import {DefaultLayoutDirective} from '../layout/layout';
 import {customMatchers, expect} from '../../utils/testing/custom-matchers';
 import {
   makeCreateTestComponent,
@@ -684,6 +684,95 @@ describe('flex directive', () => {
     });
   });
 
+  describe('with API directive queries', () => {
+    it('should query the ViewChild `fxLayout` directive properly', inject([StyleUtils],
+      (_styler: StyleUtils) => {
+        fixture = TestBed.createComponent(TestQueryWithFlexComponent);
+        fixture.detectChanges();
+
+        const layout: DefaultLayoutDirective = fixture.debugElement.componentInstance.layout;
+
+        expect(layout).toBeDefined();
+        expect(layout.activatedValue).toBe('');
+        expectNativeEl(fixture).toHaveStyle({
+          'flex-direction': 'row'
+        }, _styler);
+
+        layout.activatedValue = 'column';
+        expect(layout.activatedValue).toBe('column');
+        expectNativeEl(fixture).toHaveStyle({
+          'flex-direction': 'column'
+        }, _styler);
+      })
+    );
+    it('should query the ViewChild `fxFlex` directive properly', inject([StyleUtils],
+      (_styler: StyleUtils) => {
+        fixture = TestBed.createComponent(TestQueryWithFlexComponent);
+        fixture.detectChanges();
+
+        const flex: DefaultFlexDirective = fixture.debugElement.componentInstance.flex;
+
+        // Test for percentage value assignments
+        expect(flex).toBeDefined();
+        expect(flex.activatedValue).toBe('50%');
+
+        let nodes = queryFor(fixture, '[fxFlex]');
+        expect(nodes.length).toEqual(1);
+        expectEl(nodes[0]).toHaveStyle({'max-width': '50%'}, _styler);
+
+        // Test for raw value assignments that are converted to percentages
+        flex.activatedValue = '35';
+        expect(flex.activatedValue).toBe('35');
+
+        nodes = queryFor(fixture, '[fxFlex]');
+        expect(nodes.length).toEqual(1);
+        expectEl(nodes[0]).toHaveStyle({'max-width': '35%'}, _styler);
+
+        // Test for pixel value assignments
+        flex.activatedValue = '27.5px';
+        expect(flex.activatedValue).toBe('27.5px');
+
+        nodes = queryFor(fixture, '[fxFlex]');
+        expect(nodes.length).toEqual(1);
+        expectEl(nodes[0]).toHaveStyle({'max-width': '27.5px'}, _styler);
+      })
+    );
+    it('should restore `fxFlex` value after breakpoint activations',
+      inject([MatchMedia, StyleUtils],
+        (_matchMedia: MockMatchMedia, _styler: StyleUtils) => {
+          fixture = TestBed.createComponent(TestQueryWithFlexComponent);
+          fixture.detectChanges();
+
+          const flex: DefaultFlexDirective = fixture.debugElement.componentInstance.flex;
+
+          // Test for raw value assignments that are converted to percentages
+          expect(flex).toBeDefined();
+          flex.activatedValue = '35';
+          expect(flex.activatedValue).toBe('35');
+
+          let nodes = queryFor(fixture, '[fxFlex]');
+          expect(nodes.length).toEqual(1);
+          expectEl(nodes[0]).toHaveStyle({'max-width': '35%'}, _styler);
+
+          _matchMedia.activate('sm');
+          fixture.detectChanges();
+
+          // Test for breakpoint value changes
+          expect(flex.activatedValue).toBe('71%');
+          nodes = queryFor(fixture, '[fxFlex]');
+          expectEl(nodes[0]).toHaveStyle({'max-width': '71%'}, _styler);
+
+          _matchMedia.activate('lg');
+          fixture.detectChanges();
+
+          // Confirm activatedValue was restored properly when `sm` deactivated
+          expect(flex.activatedValue).toBe('35');
+          nodes = queryFor(fixture, '[fxFlex]');
+          expectEl(nodes[0]).toHaveStyle({'max-width': '35%'}, _styler);
+        })
+    );
+  });
+
   describe('with flex token enabled', () => {
     beforeEach(() => {
       jasmine.addMatchers(customMatchers);
@@ -867,6 +956,6 @@ class TestFlexComponent {
   `
 })
 class TestQueryWithFlexComponent {
-  @ViewChild(FlexDirective) flex!: FlexDirective;
-  @ViewChild(LayoutDirective) layout!: LayoutDirective;
+  @ViewChild(DefaultFlexDirective) flex!: DefaultFlexDirective;
+  @ViewChild(DefaultLayoutDirective) layout!: DefaultLayoutDirective;
 }

@@ -10,7 +10,6 @@ import {
   ElementRef,
   OnChanges,
   Optional,
-  SimpleChanges,
   SkipSelf,
   Injectable,
 } from '@angular/core';
@@ -25,7 +24,6 @@ import {
 
 import {LayoutDirective} from '../layout/layout';
 import {isFlowHorizontal} from '../../utils/layout-validator';
-import {EMPTY} from 'rxjs';
 
 export interface FlexOffsetParent {
   layout: string;
@@ -65,14 +63,10 @@ const selector = `
   [fxFlexOffset.gt-md], [fxFlexOffset.gt-lg]
 `;
 
-// const selectors = inputs.map(i => `[${i}]`);
-// const selector = selectors.join(',');
-
 /**
  * 'flex-offset' flexbox styling directive
  * Configures the 'margin-left' of the element in a layout container
  */
-@Directive({selector, inputs})
 export class FlexOffsetDirective extends NewBaseDirective implements OnChanges {
   protected DIRECTIVE_KEY = 'flex-offset';
 
@@ -84,27 +78,7 @@ export class FlexOffsetDirective extends NewBaseDirective implements OnChanges {
               protected styler: StyleUtils) {
     super(elRef, styleBuilder, styler, marshal);
     this.marshal.init(this.elRef.nativeElement, this.DIRECTIVE_KEY,
-      this.updateWithValue.bind(this), [this.container ? this.container.layout$ : EMPTY,
-        this.directionality.change]);
-  }
-
-  // *********************************************
-  // Lifecycle Methods
-  // *********************************************
-
-  /**
-   * For @Input changes on the current mq activation property, see onMediaQueryChanges()
-   */
-  ngOnChanges(changes: SimpleChanges): void {
-    // TODO: figure out how custom breakpoints interact with this method
-    // maybe just have it as @Inputs for them?
-    Object.keys(changes).forEach(key => {
-      if (inputs.indexOf(key) !== -1) {
-        const bp = key.split('.')[1] || '';
-        const val = changes[key].currentValue;
-        this.setValue(val, bp);
-      }
-    });
+      this.updateWithValue.bind(this), [this.directionality.change]);
   }
 
   // *********************************************
@@ -116,11 +90,11 @@ export class FlexOffsetDirective extends NewBaseDirective implements OnChanges {
    * NOTE: this will assign `margin-left` if the parent flex-direction == 'row',
    *       otherwise `margin-top` is used for the offset.
    */
-  updateWithValue(value?: string|number): void {
+  protected updateWithValue(value?: string|number): void {
     value = value || 0;
 
     // The flex-direction of this element's flex container. Defaults to 'row'.
-    const layout = this.getFlexFlowDirection(this.parentElement, true);
+    const layout = this.getFlexFlowDirection(this.parentElement!, true);
     const isRtl = this.directionality.value === 'rtl';
     if (layout === 'row' && isRtl) {
       this.styleCache = flexOffsetCacheRowRtl;
@@ -133,6 +107,11 @@ export class FlexOffsetDirective extends NewBaseDirective implements OnChanges {
     }
     this.addStyles((value && (value + '') || ''), {layout});
   }
+}
+
+@Directive({selector, inputs})
+export class DefaultFlexOffsetDirective extends FlexOffsetDirective {
+  protected inputs = inputs;
 }
 
 const flexOffsetCacheRowRtl: Map<string, StyleDefinition> = new Map();

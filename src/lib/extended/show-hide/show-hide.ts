@@ -13,7 +13,6 @@ import {
   OnChanges,
   OnDestroy,
   SimpleChanges,
-  Self,
   Optional,
   Inject,
   PLATFORM_ID,
@@ -25,12 +24,12 @@ import {
   BaseDirective,
   LAYOUT_CONFIG,
   LayoutConfigOptions,
-  MediaChange,
+  MediaChange, MediaMarshaller,
   MediaMonitor,
   SERVER_TOKEN,
   StyleUtils,
 } from '@angular/flex-layout/core';
-import {FlexDirective, LayoutDirective} from '@angular/flex-layout/flex';
+import {FlexDirective} from '@angular/flex-layout/flex';
 import {Subscription} from 'rxjs';
 
 const FALSY = ['false', false, 0];
@@ -73,6 +72,7 @@ export class ShowHideDirective extends BaseDirective
 
   /** Original dom Elements CSS display style */
   protected _display: string = '';
+  protected hasLayout = false;
 
   /* tslint:disable */
   @Input('fxShow')       set show(val: string) {  this._cacheInput('show', val);  }
@@ -113,14 +113,16 @@ export class ShowHideDirective extends BaseDirective
   @ViewChild(FlexDirective) protected _flexChild: FlexDirective | null = null;
 
   constructor(monitor: MediaMonitor,
-              @Optional() @Self() protected layout: LayoutDirective,
               protected elRef: ElementRef,
               protected styleUtils: StyleUtils,
               @Inject(PLATFORM_ID) protected platformId: Object,
               @Optional() @Inject(SERVER_TOKEN) protected serverModuleLoaded: boolean,
-              @Inject(LAYOUT_CONFIG) protected layoutConfig: LayoutConfigOptions) {
-
+              @Inject(LAYOUT_CONFIG) protected layoutConfig: LayoutConfigOptions,
+              protected marshal: MediaMarshaller) {
     super(monitor, elRef, styleUtils);
+    this._layoutWatcher = this.marshal.trackValue(this.nativeElement, 'layout')
+      .subscribe(this._updateWithValue.bind(this));
+    this.hasLayout = this.marshal.hasValue(this.nativeElement, 'layout');
   }
 
   // *********************************************
@@ -133,7 +135,7 @@ export class ShowHideDirective extends BaseDirective
    * unless it was already explicitly specified inline or in a CSS stylesheet.
    */
   protected _getDisplayStyle(): string {
-    return (this.layout || (this._flexChild && this.layoutConfig.addFlexToParent)) ?
+    return (this.hasLayout || (this._flexChild && this.layoutConfig.addFlexToParent)) ?
       'flex' : super._getDisplayStyle();
   }
 
@@ -163,13 +165,6 @@ export class ShowHideDirective extends BaseDirective
     } else {
       this._display = this._getDisplayStyle();
       DISPLAY_MAP.set(this.nativeElement, this._display);
-    }
-    if (this.layout) {
-      /**
-       * The Layout can set the display:flex (and incorrectly affect the Hide/Show directives.
-       * Whenever Layout [on the same element] resets its CSS, then update the Hide/Show CSS
-       */
-      this._layoutWatcher = this.layout.layout$.subscribe(() => this._updateWithValue());
     }
     let value = this._getDefaultVal('show', true);
     // Build _mqActivation controller
