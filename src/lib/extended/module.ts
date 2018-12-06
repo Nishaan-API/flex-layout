@@ -8,17 +8,17 @@
 import {NgModule} from '@angular/core';
 import {CoreModule} from '@angular/flex-layout/core';
 
-import {ImgSrcDirective} from './img-src/img-src';
+import {DefaultImgSrcDirective} from './img-src/img-src';
 import {ClassDirective} from './class/class';
-import {ShowHideDirective} from './show-hide/show-hide';
+import {DefaultShowHideDirective} from './show-hide/show-hide';
 import {StyleDirective} from './style/style';
 
 
 const ALL_DIRECTIVES = [
-  ShowHideDirective,
+  DefaultShowHideDirective,
   ClassDirective,
   StyleDirective,
-  ImgSrcDirective
+  DefaultImgSrcDirective
 ];
 
 /**

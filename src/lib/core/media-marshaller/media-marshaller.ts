@@ -49,11 +49,7 @@ export class MediaMarshaller {
     const bp: BreakPoint | null = this.findByQuery(mc.mediaQuery);
     if (mc.matches && bp) {
       this.activatedBreakpoints.push(bp);
-      this.activatedBreakpoints.sort((a, b) => {
-        const priorityA = a.priority || 0;
-        const priorityB = b.priority || 0;
-        return priorityB - priorityA;
-      });
+      this.activatedBreakpoints.sort(prioritySort);
     } else if (!mc.matches && bp) {
       this.activatedBreakpoints.splice(this.activatedBreakpoints.indexOf(bp), 1);
     }
@@ -66,8 +62,6 @@ export class MediaMarshaller {
    * @param key
    * @param builder optional so that custom bp directives don't have to re-provide this
    * @param observables
-   * @param trackParent whether to trigger events based on parent changes
-   * @param parentKey the key to track on the parent element
    */
   init(element: HTMLElement,
        key: string,
@@ -94,13 +88,15 @@ export class MediaMarshaller {
    * get the value for an element and key and optionally a given breakpoint
    * @param element
    * @param key
+   * @param bp
    */
-  getValue(element: HTMLElement, key: string): string {
+  getValue(element: HTMLElement, key: string, bp?: string): string {
     const bpMap = this.elementMap.get(element);
     if (bpMap) {
-      const values = this.getFallback(bpMap);
+      const values = bp !== undefined ? bpMap.get(bp) : this.getFallback(bpMap);
       if (values) {
-        return values.get(key) || '';
+        const value = values.get(key);
+        return value !== undefined ? value : '';
       }
     }
     return '';
@@ -116,7 +112,7 @@ export class MediaMarshaller {
     if (bpMap) {
       const values = this.getFallback(bpMap);
       if (values) {
-        return values.get(key) && true || false;
+        return values.get(key) !== undefined || false;
       }
     }
     return false;
@@ -211,4 +207,10 @@ export class MediaMarshaller {
     }
     return bpMap.get('');
   }
+}
+
+function prioritySort(a: BreakPoint, b: BreakPoint): number {
+  const priorityA = a.priority || 0;
+  const priorityB = b.priority || 0;
+  return priorityB - priorityA;
 }

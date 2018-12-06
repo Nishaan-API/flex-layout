@@ -5,7 +5,7 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import {Component, Directive, Input, OnInit, PLATFORM_ID} from '@angular/core';
+import {Component, Directive, OnInit, PLATFORM_ID} from '@angular/core';
 import {CommonModule, isPlatformBrowser} from '@angular/common';
 import {ComponentFixture, TestBed, inject, async} from '@angular/core/testing';
 import {
@@ -29,7 +29,7 @@ import {MatFormFieldModule} from '@angular/material/form-field';
 import {FormsModule} from '@angular/forms';
 import {MatSelectModule} from '@angular/material/select';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
-import {negativeOf, ShowHideDirective} from './show-hide';
+import {ShowHideDirective} from './show-hide';
 
 describe('show directive', () => {
   let fixture: ComponentFixture<any>;
@@ -254,25 +254,25 @@ describe('show directive', () => {
         </mat-form-field>
       `);
 
-      let selector = '[el]';
+      const elSelector = '[el]';
 
       matchMedia.useOverlaps = true;
       fixture.detectChanges();
 
       // NOTE: platform-server can't compute display for unknown elements
       if (isPlatformBrowser(platformId)) {
-        expectEl(queryFor(fixture, selector)[0]).toHaveStyle({
+        expectEl(queryFor(fixture, elSelector)[0]).toHaveCSS({
           'display': 'inline'
         }, styler);
       } else {
-        expectEl(queryFor(fixture, selector)[0]).not.toHaveStyle({
+        expectEl(queryFor(fixture, elSelector)[0]).not.toHaveStyle({
           'display': '*'
         }, styler);
       }
 
       matchMedia.activate('xs');
       fixture.detectChanges();
-      expectEl(queryFor(fixture, selector)[0]).toHaveStyle({
+      expectEl(queryFor(fixture, elSelector)[0]).toHaveStyle({
         'display': 'none'
       }, styler);
 
@@ -280,11 +280,11 @@ describe('show directive', () => {
       fixture.detectChanges();
       // NOTE: platform-server can't compute display for unknown elements
       if (isPlatformBrowser(platformId)) {
-        expectEl(queryFor(fixture, selector)[0]).toHaveStyle({
+        expectEl(queryFor(fixture, elSelector)[0]).toHaveCSS({
           'display': 'inline'
         }, styler);
       } else {
-        expectEl(queryFor(fixture, selector)[0]).not.toHaveStyle({
+        expectEl(queryFor(fixture, elSelector)[0]).not.toHaveStyle({
           'display': '*'
         }, styler);
       }
@@ -334,16 +334,12 @@ describe('show directive', () => {
 
 });
 
-@Directive({
-  selector: `[fxShow.sm-md], [fxHide.sm-md]`
-})
+const inputs = ['fxShow.sm-md', 'fxHide.sm-md'];
+const selector = `[fxShow.sm-md], [fxHide.sm-md]`;
+
+@Directive({inputs, selector})
 class FxShowHideDirective extends ShowHideDirective {
-  @Input('fxShow.sm-md') set showSmMd(val: string) {
-    this._cacheInput('showSmMd', val);
-  }
-  @Input('fxHide.sm-md') set hideSmMd(val: string) {
-    this._cacheInput('showSmMd', negativeOf(val));
-  }
+  protected inputs = inputs;
 }
 
 
