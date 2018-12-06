@@ -42,6 +42,9 @@ export class ImgSrcDirective extends NewBaseDirective {
     this.marshal.init(this.elementRef.nativeElement, this.DIRECTIVE_KEY,
       this.updateSrcFor.bind(this));
     this.setValue('', this.nativeElement.getAttribute('src') || '');
+    if (isPlatformServer(this.platformId) && this.serverModuleLoaded) {
+      this.nativeElement.setAttribute('src', '');
+    }
   }
 
   /**
