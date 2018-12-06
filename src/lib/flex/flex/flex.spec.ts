@@ -929,6 +929,7 @@ describe('flex directive', () => {
 
 @Injectable()
 export class MockFlexStyleBuilder extends StyleBuilder {
+  shouldCache = false;
   buildStyles(_input: string) {
     return {'flex': '1 1 30%'};
   }
