@@ -11,7 +11,7 @@ import {
   OnChanges,
   Optional,
   SkipSelf,
-  Injectable,
+  Injectable, OnDestroy,
 } from '@angular/core';
 import {Directionality} from '@angular/cdk/bidi';
 import {
@@ -24,25 +24,22 @@ import {
 
 import {LayoutDirective} from '../layout/layout';
 import {isFlowHorizontal} from '../../utils/layout-validator';
+import {Subscription} from 'rxjs';
 
 export interface FlexOffsetParent {
   layout: string;
+  isRtl: boolean;
 }
 
 @Injectable({providedIn: 'root'})
 export class FlexOffsetStyleBuilder extends StyleBuilder {
-  constructor(protected directionality: Directionality) {
-    super();
-  }
-
   buildStyles(offset: string, parent: FlexOffsetParent) {
     const isPercent = String(offset).indexOf('%') > -1;
     const isPx = String(offset).indexOf('px') > -1;
     if (!isPx && !isPercent && !isNaN(+offset)) {
       offset = offset + '%';
     }
-    const isRtl = this.directionality.value === 'rtl';
-    const horizontalLayoutKey = isRtl ? 'margin-right' : 'margin-left';
+    const horizontalLayoutKey = parent.isRtl ? 'margin-right' : 'margin-left';
     const styles = isFlowHorizontal(parent.layout) ? {[horizontalLayoutKey]: `${offset}`} :
       {'margin-top': `${offset}`};
 
@@ -67,8 +64,9 @@ const selector = `
  * 'flex-offset' flexbox styling directive
  * Configures the 'margin-left' of the element in a layout container
  */
-export class FlexOffsetDirective extends NewBaseDirective implements OnChanges {
+export class FlexOffsetDirective extends NewBaseDirective implements OnChanges, OnDestroy {
   protected DIRECTIVE_KEY = 'flex-offset';
+  protected gapWatcher?: Subscription;
 
   constructor(protected elRef: ElementRef,
               @Optional() @SkipSelf() protected container: LayoutDirective,
@@ -79,6 +77,16 @@ export class FlexOffsetDirective extends NewBaseDirective implements OnChanges {
     super(elRef, styleBuilder, styler, marshal);
     this.marshal.init(this.elRef.nativeElement, this.DIRECTIVE_KEY,
       this.updateWithValue.bind(this), [this.directionality.change]);
+    if (this.parentElement) {
+      this.gapWatcher = this.marshal.trackValue(this.parentElement, 'layout-gap')
+        .subscribe(this.triggerUpdate.bind(this));
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.gapWatcher) {
+      this.gapWatcher.unsubscribe();
+    }
   }
 
   // *********************************************
@@ -105,7 +113,7 @@ export class FlexOffsetDirective extends NewBaseDirective implements OnChanges {
     } else if (layout === 'column' && !isRtl) {
       this.styleCache = flexOffsetCacheColumnLtr;
     }
-    this.addStyles((value && (value + '') || ''), {layout});
+    this.addStyles((value && (value + '') || ''), {layout, isRtl});
   }
 }
 

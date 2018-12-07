@@ -11,7 +11,6 @@ import {
   Inject,
   Injectable,
   Input,
-  OnChanges,
   OnDestroy,
 } from '@angular/core';
 import {
@@ -264,21 +263,25 @@ export class FlexDirective extends NewBaseDirective implements OnDestroy {
     const layoutParts = layout.split(' ');
     this.direction = layoutParts[0];
     this.wrap = layoutParts[1] !== undefined && layoutParts[1] === 'wrap';
-    this.updateStyle(this.marshal.getValue(this.nativeElement, this.DIRECTIVE_KEY));
+    this.triggerUpdate();
   }
 
   /** Input to this is exclusively the basis input value */
   protected updateStyle(value: string) {
     const addFlexToParent = this.layoutConfig.addFlexToParent !== false;
-    const direction = this.getFlexFlowDirection(this.parentElement!, addFlexToParent);
+    if (!this.direction) {
+      this.direction = this.getFlexFlowDirection(this.parentElement!, addFlexToParent);
+    }
+    const direction = this.direction;
+    const isHorizontal = direction.startsWith('row');
     const hasWrap = this.wrap;
-    if (direction === 'row' && hasWrap) {
+    if (isHorizontal && hasWrap) {
       this.styleCache = flexRowWrapCache;
-    } else if (direction === 'row' && !hasWrap) {
+    } else if (isHorizontal && !hasWrap) {
       this.styleCache = flexRowCache;
-    } else if (direction === 'column' && hasWrap) {
+    } else if (!isHorizontal && hasWrap) {
       this.styleCache = flexColumnWrapCache;
-    } else if (direction === 'column' && !hasWrap) {
+    } else if (!isHorizontal && !hasWrap) {
       this.styleCache = flexColumnCache;
     }
     const basis = String(value).replace(';', '');
@@ -294,7 +297,7 @@ export class FlexDirective extends NewBaseDirective implements OnDestroy {
 }
 
 @Directive({inputs, selector})
-export class DefaultFlexDirective extends FlexDirective implements OnChanges {
+export class DefaultFlexDirective extends FlexDirective {
   protected inputs = inputs;
 }
 

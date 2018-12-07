@@ -18,7 +18,7 @@ const DEFAULT_VALUE = 'auto';
 @Injectable({providedIn: 'root'})
 export class GridAreaStyleBuilder extends StyleBuilder {
   buildStyles(input: string) {
-    return {'grid-area': input};
+    return {'grid-area': input || DEFAULT_VALUE};
   }
 }
 
@@ -34,16 +34,7 @@ export class GridAreaDirective extends NewBaseDirective {
               protected marshal: MediaMarshaller) {
     super(elRef, styleBuilder, styleUtils, marshal);
     this.marshal.init(this.elRef.nativeElement, this.DIRECTIVE_KEY,
-      this.updateWithValue.bind(this));
-  }
-
-  // *********************************************
-  // Protected methods
-  // *********************************************
-
-  protected updateWithValue(value?: string) {
-    value = value || DEFAULT_VALUE;
-    this.addStyles(value);
+      this.addStyles.bind(this));
   }
 }
 

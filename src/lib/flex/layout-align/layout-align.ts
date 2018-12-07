@@ -177,11 +177,11 @@ export class LayoutAlignDirective extends NewBaseDirective implements OnChanges,
    * Cache the parent container 'flex-direction' and update the 'flex' styles
    */
   protected onLayoutChange(layout: string) {
-    this.layout = layout;
+    this.layout = layout.split(' ')[0];
     if (!LAYOUT_VALUES.find(x => x === this.layout)) {
       this.layout = 'row';
     }
-    this.updateWithValue(this.marshal.getValue(this.nativeElement, this.DIRECTIVE_KEY));
+    this.triggerUpdate();
   }
 }
 

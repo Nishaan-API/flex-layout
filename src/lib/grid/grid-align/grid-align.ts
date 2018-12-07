@@ -19,7 +19,7 @@ const COL_DEFAULT = 'stretch';
 @Injectable({providedIn: 'root'})
 export class GridAlignStyleBuilder extends StyleBuilder {
   buildStyles(input: string) {
-    return buildCss(input);
+    return buildCss(input || ROW_DEFAULT);
   }
 }
 
@@ -35,16 +35,7 @@ export class GridAlignDirective extends NewBaseDirective {
               protected marshal: MediaMarshaller) {
     super(elementRef, styleBuilder, styler, marshal);
     this.marshal.init(this.elementRef.nativeElement, this.DIRECTIVE_KEY,
-      this.updateWithValue.bind(this));
-  }
-
-  // *********************************************
-  // Protected methods
-  // *********************************************
-
-  protected updateWithValue(value?: string) {
-    value = value || ROW_DEFAULT;
-    this.addStyles(value);
+      this.addStyles.bind(this));
   }
 }
 

@@ -24,7 +24,7 @@ export interface GridAreasParent {
 @Injectable({providedIn: 'root'})
 export class GridAreasStyleBuiler extends StyleBuilder {
   buildStyles(input: string, parent: GridAreasParent) {
-    const areas = input.split(DELIMETER).map(v => `"${v.trim()}"`);
+    const areas = (input || DEFAULT_VALUE).split(DELIMETER).map(v => `"${v.trim()}"`);
 
     return {
       'display': parent.inline ? 'inline-grid' : 'grid',
@@ -57,8 +57,7 @@ export class GridAreasDirective extends NewBaseDirective {
   // Protected methods
   // *********************************************
 
-  protected updateWithValue(value?: string) {
-    value = value || DEFAULT_VALUE;
+  protected updateWithValue(value: string) {
     this.addStyles(value, {inline: this.inline});
   }
 }

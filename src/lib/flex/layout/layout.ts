@@ -55,16 +55,7 @@ export class LayoutDirective extends NewBaseDirective implements OnChanges {
               protected marshal: MediaMarshaller) {
     super(elRef, styleBuilder, styleUtils, marshal);
     this.marshal.init(this.elRef.nativeElement, this.DIRECTIVE_KEY,
-      this.updateWithValue.bind(this));
-  }
-
-  // *********************************************
-  // Protected methods
-  // *********************************************
-
-  /** Validate the direction value and then update the host's inline flexbox styles */
-  protected updateWithValue(value: string) {
-    this.addStyles(value);
+      this.addStyles.bind(this));
   }
 
   protected _styleCache = layoutCache;

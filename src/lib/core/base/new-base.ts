@@ -74,6 +74,11 @@ export abstract class NewBaseDirective implements OnChanges {
     builder.sideEffect(input, genStyles, parent);
   }
 
+  protected triggerUpdate() {
+    const val = this.marshal.getValue(this.nativeElement, this.DIRECTIVE_KEY);
+    this.marshal.updateElement(this.nativeElement, this.DIRECTIVE_KEY, val);
+  }
+
   /**
    * Determine the DOM element's Flexbox flow (flex-direction).
    *

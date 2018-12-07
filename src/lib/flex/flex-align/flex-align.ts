@@ -17,6 +17,7 @@ import {
 @Injectable({providedIn: 'root'})
 export class FlexAlignStyleBuilder extends StyleBuilder {
   buildStyles(input: string) {
+    input = input || 'stretch';
     const styles: StyleDefinition = {};
 
     // Cross-axis
@@ -66,24 +67,15 @@ export class FlexAlignDirective extends NewBaseDirective {
               protected marshal: MediaMarshaller) {
     super(elRef, styleBuilder, styleUtils, marshal);
     this.marshal.init(this.elRef.nativeElement, this.DIRECTIVE_KEY,
-      this.updateWithValue.bind(this));
-  }
-
-  // *********************************************
-  // Protected methods
-  // *********************************************
-
-  protected updateWithValue(value?: string|number) {
-    value = value || 'stretch';
-    this.addStyles(value && (value + '') || '');
+      this.addStyles.bind(this));
   }
 
   protected _styleCache = flexAlignCache;
 }
 
+const flexAlignCache: Map<string, StyleDefinition> = new Map();
+
 @Directive({selector, inputs})
 export class DefaultFlexAlignDirective extends FlexAlignDirective {
   protected inputs = inputs;
 }
-
-const flexAlignCache: Map<string, StyleDefinition> = new Map();

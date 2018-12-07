@@ -17,9 +17,8 @@ import {
 @Injectable({providedIn: 'root'})
 export class FlexOrderStyleBuilder extends StyleBuilder {
   buildStyles(value: string) {
-    const val = parseInt(value, 10);
-    const styles = {order: isNaN(val) ? 0 : val};
-    return styles;
+    const val = parseInt((value || '0'), 10);
+    return {order: isNaN(val) ? 0 : val};
   }
 }
 
@@ -53,24 +52,15 @@ export class FlexOrderDirective extends NewBaseDirective implements OnChanges {
               protected marshal: MediaMarshaller) {
     super(elRef, styleBuilder, styleUtils, marshal);
     this.marshal.init(this.elRef.nativeElement, this.DIRECTIVE_KEY,
-      this.updateWithValue.bind(this));
-  }
-
-  // *********************************************
-  // Protected methods
-  // *********************************************
-
-  protected updateWithValue(value?: string) {
-    value = value || '0';
-    this.addStyles(value);
+      this.addStyles.bind(this));
   }
 
   protected _styleCache = flexOrderCache;
 }
 
+const flexOrderCache: Map<string, StyleDefinition> = new Map();
+
 @Directive({selector, inputs})
 export class DefaultFlexOrderDirective extends FlexOrderDirective {
   protected inputs = inputs;
 }
-
-const flexOrderCache: Map<string, StyleDefinition> = new Map();

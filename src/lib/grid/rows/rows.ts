@@ -24,6 +24,7 @@ export interface GridRowsParent {
 @Injectable({providedIn: 'root'})
 export class GridRowsStyleBuilder extends StyleBuilder {
   buildStyles(input: string, parent: GridRowsParent) {
+    input = input || DEFAULT_VALUE;
     let auto = false;
     if (input.endsWith(AUTO_SPECIFIER)) {
       input = input.substring(0, input.indexOf(AUTO_SPECIFIER));
@@ -65,8 +66,7 @@ export class GridRowsDirective extends NewBaseDirective {
   // Protected methods
   // *********************************************
 
-  protected updateWithValue(value?: string) {
-    value = value || DEFAULT_VALUE;
+  protected updateWithValue(value: string) {
     this.addStyles(value, {inline: this.inline});
   }
 }

@@ -134,7 +134,7 @@ export class LayoutGapDirective extends NewBaseDirective implements AfterContent
 
   ngAfterContentInit() {
     this.buildChildObservable();
-    this.updateWithValue(this.marshal.getValue(this.nativeElement, this.DIRECTIVE_KEY));
+    this.triggerUpdate();
   }
 
   ngOnDestroy() {
@@ -160,13 +160,16 @@ export class LayoutGapDirective extends NewBaseDirective implements AfterContent
     if (!LAYOUT_VALUES.find(x => x === this.layout)) {
       this.layout = 'row';
     }
-    this.updateWithValue(this.marshal.getValue(this.nativeElement, this.DIRECTIVE_KEY));
+    this.triggerUpdate();
   }
 
   /**
    *
    */
   protected updateWithValue(value: string) {
+    if (!value) {
+      value = this.marshal.getValue(this.nativeElement, this.DIRECTIVE_KEY);
+    }
     // Gather all non-hidden Element nodes
     const items = this.childrenNodes
       .filter(el => el.nodeType === 1 && this.getDisplayStyle(el) !== 'none')

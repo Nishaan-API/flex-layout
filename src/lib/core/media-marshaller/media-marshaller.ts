@@ -15,7 +15,8 @@ import {MediaChange} from '../media-change';
 type ValueMap = Map<string, string>;
 type BreakpointMap = Map<string, ValueMap>;
 type ElementMap = Map<HTMLElement, BreakpointMap>;
-type WatcherMap = WeakMap<HTMLElement, Subscription>;
+type SubscriptionMap = Map<string, Subscription>;
+type WatcherMap = WeakMap<HTMLElement, SubscriptionMap>;
 type BuilderMap = WeakMap<HTMLElement, Map<string, Function>>;
 type SubjectMap = WeakMap<HTMLElement, Map<string, Subject<string>>>;
 
@@ -75,12 +76,20 @@ export class MediaMarshaller {
       }
       builders.set(key, builder);
     }
-    if (observables && !this.watcherMap.get(element)) {
-      const subscription = merge(...observables).subscribe(() => {
-        const currentValue = this.getValue(element, key);
-        this.updateElement(element, key, currentValue);
-      });
-      this.watcherMap.set(element, subscription);
+    if (observables) {
+      let watchers = this.watcherMap.get(element);
+      if (!watchers) {
+        watchers = new Map();
+        this.watcherMap.set(element, watchers);
+      }
+      const subscription = watchers.get(key);
+      if (!subscription) {
+        const newSubscription = merge(...observables).subscribe(() => {
+          const currentValue = this.getValue(element, key);
+          this.updateElement(element, key, currentValue);
+        });
+        watchers.set(key, newSubscription);
+      }
     }
   }
 
@@ -171,16 +180,16 @@ export class MediaMarshaller {
   updateElement(element: HTMLElement, key: string, val: any): void {
     const builders = this.builderMap.get(element);
     const subjects = this.subjectMap.get(element);
-    if (subjects) {
-      const subject = subjects.get(key);
-      if (subject) {
-        subject.next(val);
-      }
-    }
     if (builders) {
       const builder = builders.get(key);
       if (builder) {
         builder(val);
+      }
+    }
+    if (subjects) {
+      const subject = subjects.get(key);
+      if (subject) {
+        subject.next(val);
       }
     }
   }

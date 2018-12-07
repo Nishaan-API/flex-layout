@@ -25,7 +25,7 @@ export interface GridAlignColumnsParent {
 @Injectable({providedIn: 'root'})
 export class GridAlignColumnsStyleBuilder extends StyleBuilder {
   buildStyles(input: string, parent: GridAlignColumnsParent) {
-    return buildCss(input, parent.inline);
+    return buildCss(input || `${DEFAULT_MAIN} ${DEFAULT_CROSS}`, parent.inline);
   }
 }
 
@@ -53,8 +53,7 @@ export class GridAlignColumnsDirective extends NewBaseDirective {
   // Protected methods
   // *********************************************
 
-  protected updateWithValue(value?: string) {
-    value = value || `${DEFAULT_MAIN} ${DEFAULT_CROSS}`;
+  protected updateWithValue(value: string) {
     this.addStyles(value, {inline: this.inline});
   }
 }

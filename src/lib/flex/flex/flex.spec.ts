@@ -103,6 +103,77 @@ describe('flex directive', () => {
       expectEl(element).toHaveStyle({'flex': '10 1 auto'}, styler);
     });
 
+    it('should add correct styles for `fxFlex` with multiple layout changes and wraps', () => {
+      componentWithTemplate(`
+        <div [fxLayout]="direction + ' wrap'" fxLayoutAlign="start center">
+          <div fxFlex="30"></div>
+        </div>
+      `);
+      fixture.detectChanges();
+      let element = queryFor(fixture, '[fxFlex]')[0];
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'column'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-height': '30%'}, styler);
+
+      fixture.debugElement.componentInstance.direction = 'row';
+      fixture.detectChanges();
+
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'row'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-width': '30%'}, styler);
+
+      fixture.debugElement.componentInstance.direction = 'column';
+      fixture.detectChanges();
+
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'column'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-height': '30%'}, styler);
+    });
+
+    it('should add correct styles for `fxFlex` with gap in grid mode and wrap parent', () => {
+      componentWithTemplate(`
+        <div [fxLayout]="direction + ' wrap'" fxLayoutGap="10px grid">
+          <div fxFlex="30"></div>
+          <div fxFlex="30"></div>
+          <div fxFlex="30"></div>
+        </div>
+      `);
+      fixture.debugElement.componentInstance.direction = 'row';
+      fixture.detectChanges();
+      let element = queryFor(fixture, '[fxFlex]')[0];
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'row'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-width': '30%'}, styler);
+
+      fixture.debugElement.componentInstance.direction = 'row-reverse';
+      fixture.detectChanges();
+
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'row-reverse'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-width': '30%'}, styler);
+
+      fixture.debugElement.componentInstance.direction = 'column';
+      fixture.detectChanges();
+
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'column'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-height': '30%'}, styler);
+
+      fixture.debugElement.componentInstance.direction = 'column-reverse';
+      fixture.detectChanges();
+
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'column-reverse'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-height': '30%'}, styler);
+    });
+
     it('should add correct styles for `fxFlex` and ngStyle with multiple layout changes', () => {
       // NOTE: the presence of ngIf on the child element is imperative for detecting 700
       componentWithTemplate(`

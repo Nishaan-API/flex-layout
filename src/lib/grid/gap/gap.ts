@@ -25,7 +25,7 @@ export class GridGapStyleBuilder extends StyleBuilder {
   buildStyles(input: string, parent: GridGapParent) {
     return {
       'display': parent.inline ? 'inline-grid' : 'grid',
-      'grid-gap': input
+      'grid-gap': input || DEFAULT_VALUE
     };
   }
 }
@@ -53,8 +53,7 @@ export class GridGapDirective extends NewBaseDirective {
   // Protected methods
   // *********************************************
 
-  protected updateWithValue(value?: string) {
-    value = value || DEFAULT_VALUE;
+  protected updateWithValue(value: string) {
     this.addStyles(value, {inline: this.inline});
   }
 }

@@ -23,7 +23,7 @@ export interface GridAutoParent {
 @Injectable({providedIn: 'root'})
 export class GridAutoStyleBuilder extends StyleBuilder {
   buildStyles(input: string, parent: GridAutoParent) {
-    let [direction, dense] = input.split(' ');
+    let [direction, dense] = (input || DEFAULT_VALUE).split(' ');
     if (direction !== 'column' && direction !== 'row' && direction !== 'dense') {
       direction = 'row';
     }
@@ -60,8 +60,7 @@ export class GridAutoDirective extends NewBaseDirective {
   // Protected methods
   // *********************************************
 
-  protected updateWithValue(value?: string) {
-    value = value || DEFAULT_VALUE;
+  protected updateWithValue(value: string) {
     this.addStyles(value, {inline: this.inline});
   }
 }

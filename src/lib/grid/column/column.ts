@@ -18,7 +18,7 @@ const DEFAULT_VALUE = 'auto';
 @Injectable({providedIn: 'root'})
 export class GridColumnStyleBuilder extends StyleBuilder {
   buildStyles(input: string) {
-    return {'grid-column': input};
+    return {'grid-column': input || DEFAULT_VALUE};
   }
 }
 
@@ -33,12 +33,7 @@ export class GridColumnDirective extends NewBaseDirective {
               protected marshal: MediaMarshaller) {
     super(elementRef, styleBuilder, styler, marshal);
     this.marshal.init(this.elementRef.nativeElement, this.DIRECTIVE_KEY,
-      this.updateWithValue.bind(this));
-  }
-
-  protected updateWithValue(value?: string) {
-    value = value || DEFAULT_VALUE;
-    this.addStyles(value);
+      this.addStyles.bind(this));
   }
 }
 
