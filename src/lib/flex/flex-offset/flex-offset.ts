@@ -10,8 +10,8 @@ import {
   ElementRef,
   OnChanges,
   Optional,
-  SkipSelf,
-  Injectable, OnDestroy,
+  Injectable,
+  OnDestroy,
 } from '@angular/core';
 import {Directionality} from '@angular/cdk/bidi';
 import {
@@ -22,7 +22,6 @@ import {
   StyleUtils,
 } from '@angular/flex-layout/core';
 
-import {LayoutDirective} from '../layout/layout';
 import {isFlowHorizontal} from '../../utils/layout-validator';
 import {Subscription} from 'rxjs';
 
@@ -69,9 +68,10 @@ export class FlexOffsetDirective extends NewBaseDirective implements OnChanges, 
   protected gapWatcher?: Subscription;
 
   constructor(protected elRef: ElementRef,
-              @Optional() @SkipSelf() protected container: LayoutDirective,
               protected directionality: Directionality,
-              protected styleBuilder: FlexOffsetStyleBuilder,
+              // NOTE: not actually optional, but we need to force DI without a
+              // constructor call
+              @Optional() protected styleBuilder: FlexOffsetStyleBuilder,
               protected marshal: MediaMarshaller,
               protected styler: StyleUtils) {
     super(elRef, styleBuilder, styler, marshal);
