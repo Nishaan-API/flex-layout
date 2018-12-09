@@ -38,9 +38,7 @@ export class MediaMarshaller {
 
   constructor(protected matchMedia: MatchMedia,
               protected breakpoints: BreakPointRegistry) {
-    this.matchMedia
-      .observe()
-      .subscribe((mc: MediaChange) => this.activate(mc));
+    this.matchMedia.observe().subscribe(this.activate.bind(this));
   }
 
   /**
