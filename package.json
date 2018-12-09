@@ -34,6 +34,7 @@
     "@angular/core": "^7.0.3",
     "@angular/platform-browser": "^7.0.3",
     "core-js": "^2.5.7",
+    "karma-parallel": "^0.3.1",
     "rxjs": "^6.3.0",
     "systemjs": "0.19.43",
     "tsickle": "^0.32.0",

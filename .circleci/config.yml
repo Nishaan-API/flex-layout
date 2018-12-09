@@ -80,6 +80,7 @@ jobs:
     steps:
       - *checkout_code
       - *restore_cache
+      - *yarn_install
 
       - run: yarn gulp :publish:build-releases
 
