@@ -81,7 +81,7 @@ jobs:
       - *checkout_code
       - *restore_cache
 
-      - run: yarn lib:build
+      - run: yarn gulp :publish:build-releases
 
       # Note: We want to save the cache in this job because the workspace cache also
       # includes the build cache that will be updated in this job.
