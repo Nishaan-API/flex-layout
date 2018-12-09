@@ -58,6 +58,8 @@ branches:
 #script:
   # - ./scripts/ci/travis-script.sh
 
+script: exit 0
+
 #cache:
 #  yarn: true
 #  directories:
