@@ -8,6 +8,7 @@
 import {Injectable} from '@angular/core';
 import {merge, Observable, Subject, Subscription} from 'rxjs';
 import {BreakPoint} from '../breakpoints/break-point';
+import {prioritySort} from '../breakpoints/breakpoint-tools';
 import {BreakPointRegistry} from '../breakpoints/break-point-registry';
 import {MatchMedia} from '../match-media/match-media';
 import {MediaChange} from '../media-change';
@@ -216,10 +217,4 @@ export class MediaMarshaller {
     }
     return bpMap.get('');
   }
-}
-
-function prioritySort(a: BreakPoint, b: BreakPoint): number {
-  const priorityA = a.priority || 0;
-  const priorityB = b.priority || 0;
-  return priorityB - priorityA;
 }

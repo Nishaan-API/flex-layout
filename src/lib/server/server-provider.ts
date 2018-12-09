@@ -15,7 +15,8 @@ import {
   BreakPoint,
   MatchMedia,
   StylesheetMap,
-  ServerMatchMedia
+  ServerMatchMedia,
+  prioritySort,
 } from '@angular/flex-layout/core';
 
 
@@ -41,6 +42,7 @@ export function generateStaticFlexLayoutStyles(serverSheet: StylesheetMap,
   const defaultStyles = new Map(serverSheet.stylesheet);
   let styleText = generateCss(defaultStyles, 'all', classMap);
 
+  breakpoints.sort(prioritySort);
   breakpoints.reverse();
   breakpoints.forEach((bp, i) => {
     serverSheet.clearStyles();
