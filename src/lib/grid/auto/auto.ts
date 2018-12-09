@@ -10,7 +10,8 @@ import {
   NewBaseDirective,
   StyleUtils,
   StyleBuilder,
-  MediaMarshaller
+  MediaMarshaller,
+  StyleDefinition,
 } from '@angular/flex-layout/core';
 import {coerceBooleanProperty} from '@angular/cdk/coercion';
 
@@ -61,9 +62,13 @@ export class GridAutoDirective extends NewBaseDirective {
   // *********************************************
 
   protected updateWithValue(value: string) {
+    this.styleCache = this.inline ? autoInlineCache : autoCache;
     this.addStyles(value, {inline: this.inline});
   }
 }
+
+const autoCache: Map<string, StyleDefinition> = new Map();
+const autoInlineCache: Map<string, StyleDefinition> = new Map();
 
 const inputs = [
   'gdAuto',

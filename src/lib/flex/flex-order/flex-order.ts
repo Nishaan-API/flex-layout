@@ -55,7 +55,7 @@ export class FlexOrderDirective extends NewBaseDirective implements OnChanges {
       this.addStyles.bind(this));
   }
 
-  protected _styleCache = flexOrderCache;
+  protected styleCache = flexOrderCache;
 }
 
 const flexOrderCache: Map<string, StyleDefinition> = new Map();

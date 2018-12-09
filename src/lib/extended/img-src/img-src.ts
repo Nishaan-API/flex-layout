@@ -12,6 +12,7 @@ import {
   NewBaseDirective,
   SERVER_TOKEN,
   StyleBuilder,
+  StyleDefinition,
   StyleUtils,
 } from '@angular/flex-layout/core';
 
@@ -63,7 +64,11 @@ export class ImgSrcDirective extends NewBaseDirective {
       this.nativeElement.setAttribute('src', String(url));
     }
   }
+
+  protected styleCache = imgSrcCache;
 }
+
+const imgSrcCache: Map<string, StyleDefinition> = new Map();
 
 const inputs = [
   'src.xs', 'src.sm', 'src.md', 'src.lg', 'src.xl',

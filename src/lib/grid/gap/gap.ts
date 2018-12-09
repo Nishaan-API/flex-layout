@@ -10,7 +10,8 @@ import {
   NewBaseDirective,
   StyleUtils,
   MediaMarshaller,
-  StyleBuilder
+  StyleBuilder,
+  StyleDefinition,
 } from '@angular/flex-layout/core';
 import {coerceBooleanProperty} from '@angular/cdk/coercion';
 
@@ -54,9 +55,13 @@ export class GridGapDirective extends NewBaseDirective {
   // *********************************************
 
   protected updateWithValue(value: string) {
+    this.styleCache = this.inline ? gapInlineCache : gapCache;
     this.addStyles(value, {inline: this.inline});
   }
 }
+
+const gapCache: Map<string, StyleDefinition> = new Map();
+const gapInlineCache: Map<string, StyleDefinition> = new Map();
 
 const inputs = [
   'gdGap',

@@ -11,6 +11,7 @@ import {
   StyleUtils,
   MediaMarshaller,
   StyleBuilder,
+  StyleDefinition,
 } from '@angular/flex-layout/core';
 
 const DEFAULT_VALUE = 'auto';
@@ -35,7 +36,11 @@ export class GridRowDirective extends NewBaseDirective {
     this.marshal.init(this.elementRef.nativeElement, this.DIRECTIVE_KEY,
       this.addStyles.bind(this));
   }
+
+  protected styleCache = rowCache;
 }
+
+const rowCache: Map<string, StyleDefinition> = new Map();
 
 const inputs = [
   'gdRow',

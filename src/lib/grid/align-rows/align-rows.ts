@@ -11,7 +11,7 @@ import {
   StyleUtils,
   StyleBuilder,
   StyleDefinition,
-  MediaMarshaller
+  MediaMarshaller,
 } from '@angular/flex-layout/core';
 import {coerceBooleanProperty} from '@angular/cdk/coercion';
 
@@ -54,9 +54,13 @@ export class GridAlignRowsDirective extends NewBaseDirective {
   // *********************************************
 
   protected updateWithValue(value: string) {
+    this.styleCache = this.inline ? alignRowsInlineCache : alignRowsCache;
     this.addStyles(value, {inline: this.inline});
   }
 }
+
+const alignRowsCache: Map<string, StyleDefinition> = new Map();
+const alignRowsInlineCache: Map<string, StyleDefinition> = new Map();
 
 const inputs = [
   'gdAlignRows',

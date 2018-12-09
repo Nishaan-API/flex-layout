@@ -10,7 +10,8 @@ import {
   MediaMarshaller,
   NewBaseDirective,
   StyleBuilder,
-  StyleUtils
+  StyleDefinition,
+  StyleUtils,
 } from '@angular/flex-layout/core';
 import {coerceBooleanProperty} from '@angular/cdk/coercion';
 
@@ -67,9 +68,13 @@ export class GridRowsDirective extends NewBaseDirective {
   // *********************************************
 
   protected updateWithValue(value: string) {
+    this.styleCache = this.inline ? rowsInlineCache : rowsCache;
     this.addStyles(value, {inline: this.inline});
   }
 }
+
+const rowsCache: Map<string, StyleDefinition> = new Map();
+const rowsInlineCache: Map<string, StyleDefinition> = new Map();
 
 const inputs = [
   'gdRows',

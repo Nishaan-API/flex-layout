@@ -10,6 +10,7 @@ import {
   MediaMarshaller,
   NewBaseDirective,
   StyleBuilder,
+  StyleDefinition,
   StyleUtils,
 } from '@angular/flex-layout/core';
 
@@ -37,7 +38,11 @@ export class GridAlignDirective extends NewBaseDirective {
     this.marshal.init(this.elementRef.nativeElement, this.DIRECTIVE_KEY,
       this.addStyles.bind(this));
   }
+
+  protected styleCache = alignCache;
 }
+
+const alignCache: Map<string, StyleDefinition> = new Map();
 
 const inputs = [
   'gdGridAlign',

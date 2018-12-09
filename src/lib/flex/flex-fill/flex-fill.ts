@@ -45,7 +45,7 @@ export class FlexFillDirective extends NewBaseDirective {
     this.addStyles('');
   }
 
-  protected _styleCache = flexFillCache;
+  protected styleCache = flexFillCache;
 }
 
 const flexFillCache: Map<string, StyleDefinition> = new Map();

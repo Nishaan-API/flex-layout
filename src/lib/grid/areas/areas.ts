@@ -10,7 +10,8 @@ import {
   NewBaseDirective,
   StyleUtils,
   StyleBuilder,
-  MediaMarshaller
+  MediaMarshaller,
+  StyleDefinition,
 } from '@angular/flex-layout/core';
 import {coerceBooleanProperty} from '@angular/cdk/coercion';
 
@@ -58,9 +59,13 @@ export class GridAreasDirective extends NewBaseDirective {
   // *********************************************
 
   protected updateWithValue(value: string) {
+    this.styleCache = this.inline ? areasInlineCache : areasCache;
     this.addStyles(value, {inline: this.inline});
   }
 }
+
+const areasCache: Map<string, StyleDefinition> = new Map();
+const areasInlineCache: Map<string, StyleDefinition> = new Map();
 
 const inputs = [
   'gdAreas',

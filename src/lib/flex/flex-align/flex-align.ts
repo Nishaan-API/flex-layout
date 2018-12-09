@@ -70,7 +70,7 @@ export class FlexAlignDirective extends NewBaseDirective {
       this.addStyles.bind(this));
   }
 
-  protected _styleCache = flexAlignCache;
+  protected styleCache = flexAlignCache;
 }
 
 const flexAlignCache: Map<string, StyleDefinition> = new Map();

@@ -58,7 +58,7 @@ export class LayoutDirective extends NewBaseDirective implements OnChanges {
       this.addStyles.bind(this));
   }
 
-  protected _styleCache = layoutCache;
+  protected styleCache = layoutCache;
 }
 
 @Directive({selector, inputs})

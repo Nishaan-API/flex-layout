@@ -11,6 +11,7 @@ import {
   StyleUtils,
   MediaMarshaller,
   StyleBuilder,
+  StyleDefinition,
 } from '@angular/flex-layout/core';
 
 const DEFAULT_VALUE = 'auto';
@@ -36,7 +37,11 @@ export class GridAreaDirective extends NewBaseDirective {
     this.marshal.init(this.elRef.nativeElement, this.DIRECTIVE_KEY,
       this.addStyles.bind(this));
   }
+
+  protected styleCache = gridAreaCache;
 }
+
+const gridAreaCache: Map<string, StyleDefinition> = new Map();
 
 const inputs = [
   'gdArea',
