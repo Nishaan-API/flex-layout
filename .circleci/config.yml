@@ -1,4 +1,6 @@
 # Configuration file for https://circleci.com/gh/angular/flex-layout
+# based on the configuration for https://circleci.com/gh/angular/material2
+# Credit for file goes to Paul Gschwendtner (@DevVersion)
 
 # Note: YAML anchors allow an object to be re-used, reducing duplication.
 # The ampersand declares an alias for an object, then later the `<<: *name`
@@ -110,8 +112,8 @@ jobs:
     <<: *job_defaults
     resource_class: xlarge
     environment:
-      BROWSER_STACK_USERNAME: "angularteam1"
-      BROWSER_STACK_ACCESS_KEY: "CaXMeMHD9pr5PHg8N7Jq"
+      BROWSER_STACK_USERNAME: "adamplumer1"
+      BROWSER_STACK_ACCESS_KEY: "WgLjxoB2zQ3tqmsznKnz"
     steps:
       - *checkout_code
       - *restore_cache
@@ -167,7 +169,7 @@ jobs:
   # -------------------------------------------------------------------------
   # Job that makes sure Angular Layout can be integrated with a basic app
   # -------------------------------------------------------------------------
-  hw_build:
+  hello_world_build:
     <<: *job_defaults
     steps:
       - *checkout_code
@@ -291,7 +293,7 @@ workflows:
   integration_tests:
     jobs:
       - prerender_build
-      - hw_build
+      - hello_world_build
       - aot_build
 
   release_output:

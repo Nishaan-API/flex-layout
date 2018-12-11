@@ -6,8 +6,6 @@
  *   - local: Launches the browser locally on the current operating system.
  *   - BS: Launches the browser within BrowserStack
  *   - SL: Launches the browser within Saucelabs
- *
- * TODO(devversion): rename this to "browserstack" and "saucelabs".
  */
 const browserConfig = {
   'ChromeHeadlessCI':  { unitTest: {target: 'local', }},

@@ -24,8 +24,6 @@ exports.config = {
       path: '../tools/axe-protractor/axe-protractor.js',
 
       rules: [
-        // Exclude mat-menu elements because those are empty if not active.
-        { id: 'aria-required-children', selector: '*:not(mat-menu)' },
 
         // Disable color contrast checks since the final colors will vary based on the theme.
         { id: 'color-contrast', enabled: false },
