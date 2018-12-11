@@ -39,7 +39,6 @@ var_6: &save_cache
     key: *cache_key
     paths:
       - "node_modules"
-      - "~/dist/releases"
 
 # Job step that ensures that the node module dependencies are installed and up-to-date. We use
 # Yarn with the frozen lockfile option in order to make sure that lock file and package.json are
